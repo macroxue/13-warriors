@@ -94,7 +94,7 @@ class Hand {
 
   void ShowHand() {
     printf("FULL HAND:\t");
-    // Sort by suit.
+    // SortFromLowToHigh by suit.
     for (auto suit : suits) {
       for (auto card : suit) {
         card->Show();
@@ -104,7 +104,7 @@ class Hand {
       }
     }
     printf("\n\t\t");
-    // Sort by rank.
+    // SortFromLowToHigh by rank.
     for (auto rank : ranks) {
       for (auto card : rank) {
         card->Show();
@@ -187,30 +187,78 @@ class Hand {
           }
           SetInUse(patterns[first][f], true);
           if (!Waste()) {
-            printf("\t\t");
-            ShowSet(patterns[first][f]);
-            ShowSet(patterns[middle][m]);
-            ShowSet(patterns[last][l]);
-            printf("\n");
+            ShowHandPatterns(first, middle, last);
+            ShowHandSets(patterns[first][f], patterns[middle][m], patterns[last][l]);
           }
           SetInUse(patterns[first][f], false);
         }
 
         if (first == JUNK && !Waste()) {
-          printf("\t\tJUNK , ");
-          ShowSet(patterns[middle][m]);
-          ShowSet(patterns[last][l]);
-          printf("\n");
+          ShowHandPatterns(first, middle, last);
+          ShowHandSets(Set(), patterns[middle][m], patterns[last][l]);
         }
         SetInUse(patterns[middle][m], false);
       }
       if (middle == JUNK && !Waste()) {
-        printf("\t\tJUNK , JUNK , ");
-        ShowSet(patterns[last][l]);
-        printf("\n");
+        ShowHandPatterns(first, middle, last);
+        ShowHandSets(Set(), Set(), patterns[last][l]);
       }
       SetInUse(patterns[last][l], false);
     }
+  }
+
+  void ShowHandPatterns(int first, int middle, int last) {
+    printf("\t\t");
+    printf("%s %s %s , ", pattern_names[first], pattern_names[middle],
+           pattern_names[last]);
+  }
+
+  void ShowHandSets(Set first, Set middle, Set last) {
+    Set unused_cards = GetUnusedCards();
+    SortFromHighToLow(unused_cards);
+    int next = 0;
+
+    if (first.empty() && middle.empty()) {
+      swap(unused_cards[0], unused_cards[3]);
+    }
+
+    if (first.size() != 3) {
+      printf("[ ");
+      for (int i = 0; i < 3-first.size(); ++i) {
+        unused_cards[next++]->Show();
+      }
+      printf("] ");
+    }
+    ShowSet(first);
+
+    if (middle.size() != 5) {
+      printf("[ ");
+      for (int i = 0; i < 5-middle.size(); ++i) {
+        unused_cards[next++]->Show();
+      }
+      printf("] ");
+    }
+    ShowSet(middle);
+
+    if (last.size() != 5) {
+      printf("[ ");
+      for (int i = 0; i < 5-last.size(); ++i) {
+        unused_cards[next++]->Show();
+      }
+      printf("] ");
+    }
+    ShowSet(last);
+    printf("\n");
+  }
+
+  Set GetUnusedCards() {
+    Set unused_cards;
+    for (auto card : cards) {
+      if (!card->in_use) {
+        unused_cards.push_back(card);
+      }
+    }
+    return unused_cards;
   }
 
   void SetInUse(Set set, bool in_use) {
@@ -281,7 +329,7 @@ class Hand {
       }
       auto flushes = PickFlushes(suit);
       for (auto flush : flushes) {
-        SortFlush(flush);
+        SortFromLowToHigh(flush);
         if (IsFlushRoyal(flush)) {
           patterns[ROYAL_FLUSH].push_back(flush);
         } else if (IsFlushStraight(flush)) {
@@ -420,16 +468,23 @@ class Hand {
     return true;
   }
 
-  void SortFlush(Set& flush) {
-    for (int i = 0; i < flush.size()-1; ++i) {
-      for (int j = i+1; j < flush.size(); ++j) {
-        if (flush[i]->rank > flush[j]->rank) {
-          swap(flush[i], flush[j]);
+  void SortFromLowToHigh(Set& cards) {
+    for (int i = 0; i < cards.size()-1; ++i) {
+      for (int j = i+1; j < cards.size(); ++j) {
+        if (cards[i]->rank > cards[j]->rank) {
+          swap(cards[i], cards[j]);
         }
       }
     }
-    for (int i = 0; i < flush.size()-1; ++i) {
-      assert(flush[i]->rank < flush[i+1]->rank);
+  }
+
+  void SortFromHighToLow(Set& cards) {
+    for (int i = 0; i < cards.size()-1; ++i) {
+      for (int j = i+1; j < cards.size(); ++j) {
+        if (cards[i]->rank < cards[j]->rank) {
+          swap(cards[i], cards[j]);
+        }
+      }
     }
   }
 
