@@ -42,42 +42,47 @@ struct Card {
 
 typedef vector<Card*> Set;
 
+struct Deck {
+  Deck() : top(0) {
+    for (int i = 0; i < 52; i++) {
+      cards[i].suit = i/13;
+      cards[i].rank = 13 - i%13;
+      cards[i].in_use = false;
+    }
+  }
+
+  void Shuffle() {
+    top = 0;
+    for (int i = 0; i < 52; i++) {
+      swap(cards[i], cards[rand() % 52]);
+    }
+  }
+
+  Card* DealOneCard() {
+    return &cards[top++];
+  }
+
+  Card cards[52];
+  int  top;
+};
+
 class Hand {
  public:
-  Hand() {
-    for (int c = 0; c < 52; c++) {
-      all_cards[c].suit = c/13;
-      all_cards[c].rank = 13 - c%13;
-      all_cards[c].in_use = false;
+  Hand() {}
+
+  void DealFrom(Deck* deck) {
+    for (int i = 0; i < 13; ++i) {
+      cards.push_back(deck->DealOneCard());
     }
-    GenerateRandomHand();
-    //DragonHand();
+  }
+
+  void ArrangeSets() {
     FindPatterns();
     ShowHand();
     ShowPatterns();
 
     Natural();
     Search();
-  }
-
-  void GenerateRandomHand() {
-    bool selected[52];
-    for (int c = 0; c < 52; c++) {
-      selected[c] = false;
-    }
-    for (int h = 0; h < 13; h++) {
-      int c;
-      do c = rand() % 52;
-      while (selected[c]);
-      selected[c] = true;
-      cards.push_back(&all_cards[c]);
-    }
-  }
-
-  void DragonHand() {
-    for (int h = 0; h < 13; h++) {
-      cards.push_back(&all_cards[h]);
-    }
   }
 
   void FindPatterns() {
@@ -501,7 +506,15 @@ int main(int argc, char* argv[])
   int seed = argc > 1 ? atoi(argv[1]) : time(NULL);
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
-  Hand hand;
+  Deck deck;
+  deck.Shuffle();
+
+  Hand hands[4];
+  for (int i = 0; i < 4; i++) {
+    hands[i].DealFrom(&deck);
+    hands[i].ArrangeSets();
+  }
+
   return 0;
 }
 
