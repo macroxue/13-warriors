@@ -27,7 +27,7 @@ const char* pattern_names[NUM_PATTERNS] = {
 };
 
 const int pattern_sizes[NUM_PATTERNS] = {
-  1, 2, 4, 3, 5, 5, 5, 4, 5, 5
+  0, 2, 4, 3, 5, 5, 5, 4, 5, 5
 };
 
 struct Card {
@@ -41,6 +41,7 @@ struct Card {
 };
 
 typedef vector<Card*> Set;
+typedef vector<pair<int,Set>> Combo;
 
 struct Deck {
   Deck() : top(0) {
@@ -87,6 +88,7 @@ class Hand {
     } else {
       ShowPatterns();
       Search();
+      ShowCombos();
     }
   }
 
@@ -131,18 +133,38 @@ class Hand {
           printf("\t");
         }
         for (auto set : patterns[i]) {
-          ShowSet(set);
+          ShowSet(set, i);
         }
         printf("\n");
       }
     }
   }
 
-  void ShowSet(Set set) {
-    for (auto card : set) {
-      card->Show();
+  void ShowSet(Set set, int p) {
+    for (int i = 0; i < set.size(); ++i) {
+      if (i == pattern_sizes[p]) {
+        printf("[ ");
+      }
+      set[i]->Show();
+      if (i >= pattern_sizes[p] && i == set.size()-1) {
+        printf("] ");
+      }
     }
     printf(", ");
+  }
+
+  void ShowCombos() {
+    for (auto combo : combos) {
+      int f = combo[0].first;
+      int m = combo[1].first;
+      int l = combo[2].first;
+      printf("\t\t");
+      printf("%s %s %s , ", pattern_names[f], pattern_names[m], pattern_names[l]);
+      ShowSet(combo[0].second, f);
+      ShowSet(combo[1].second, m);
+      ShowSet(combo[2].second, l);
+      printf("\n");
+    }
   }
 
   bool Natural() {
@@ -198,68 +220,50 @@ class Hand {
           }
           SetInUse(patterns[first][f], true);
           if (!Waste()) {
-            ShowHandPatterns(first, middle, last);
-            ShowHandSets(patterns[first][f], patterns[middle][m], patterns[last][l]);
+            AddCombo(first, patterns[first][f], middle, patterns[middle][m],
+                     last, patterns[last][l]);
           }
           SetInUse(patterns[first][f], false);
         }
 
         if (first == JUNK && !Waste()) {
-          ShowHandPatterns(first, middle, last);
-          ShowHandSets(Set(), patterns[middle][m], patterns[last][l]);
+          AddCombo(first, Set(), middle, patterns[middle][m],
+                       last, patterns[last][l]);
         }
         SetInUse(patterns[middle][m], false);
       }
       if (middle == JUNK && !Waste()) {
-        ShowHandPatterns(first, middle, last);
-        ShowHandSets(Set(), Set(), patterns[last][l]);
+        AddCombo(first, Set(), middle, Set(), last, patterns[last][l]);
       }
       SetInUse(patterns[last][l], false);
     }
   }
 
-  void ShowHandPatterns(int first, int middle, int last) {
-    printf("\t\t");
-    printf("%s %s %s , ", pattern_names[first], pattern_names[middle],
-           pattern_names[last]);
-  }
-
-  void ShowHandSets(Set first, Set middle, Set last) {
+  void AddCombo(int f, Set first, int m, Set middle, int l, Set last) {
     Set unused_cards = GetUnusedCards();
     SortFromHighToLow(unused_cards);
     int next = 0;
 
+    // Special case when the first and the middle are junks.
     if (first.empty() && middle.empty()) {
       swap(unused_cards[0], unused_cards[3]);
     }
 
-    if (first.size() != 3) {
-      printf("[ ");
-      for (int i = 0; i < 3-first.size(); ++i) {
-        unused_cards[next++]->Show();
-      }
-      printf("] ");
+    for (int i = first.size(); i < 3; ++i) {
+      first.push_back(unused_cards[next++]);
     }
-    ShowSet(first);
+    for (int i = middle.size(); i < 5; ++i) {
+      middle.push_back(unused_cards[next++]);
+    }
+    for (int i = last.size(); i < 5; ++i) {
+      last.push_back(unused_cards[next++]);
+    }
 
-    if (middle.size() != 5) {
-      printf("[ ");
-      for (int i = 0; i < 5-middle.size(); ++i) {
-        unused_cards[next++]->Show();
-      }
-      printf("] ");
-    }
-    ShowSet(middle);
-
-    if (last.size() != 5) {
-      printf("[ ");
-      for (int i = 0; i < 5-last.size(); ++i) {
-        unused_cards[next++]->Show();
-      }
-      printf("] ");
-    }
-    ShowSet(last);
-    printf("\n");
+    Combo combo;
+    combo.push_back(make_pair(f, first));
+    combo.push_back(make_pair(m, middle));
+    combo.push_back(make_pair(l, last));
+    combos.push_back(combo);
   }
 
   Set GetUnusedCards() {
@@ -505,6 +509,7 @@ class Hand {
   Set suits[NUM_SUITS];
   Set ranks[NUM_RANKS];
   vector<Set> patterns[NUM_PATTERNS];
+  vector<Combo> combos;
 };
 
 int main(int argc, char* argv[])
