@@ -41,11 +41,25 @@ struct Card {
 };
 
 typedef vector<Card*> Set;
-typedef vector<pair<int,Set>> Combo;
+class Combo : public vector<pair<int,Set>> {
+ public:
+  bool operator < (const Combo& c) {
+    int lose_count = 0;
+    for (int i = 0; i < 3; ++i) {
+      lose_count += (*this)[i].first < c[i].first;
+    }
+    int win_count = 0;
+    for (int i = 0; i < 3; ++i) {
+      win_count += (*this)[i].first > c[i].first;
+    }
+
+    return lose_count > 0 && win_count == 0;
+  }
+};
 
 struct Deck {
   Deck() : top(0) {
-    for (int i = 0; i < 52; i++) {
+    for (int i = 0; i < 52; ++i) {
       cards[i].suit = i/13;
       cards[i].rank = 13 - i%13;
       cards[i].in_use = false;
@@ -54,7 +68,7 @@ struct Deck {
 
   void Shuffle() {
     top = 0;
-    for (int i = 0; i < 52; i++) {
+    for (int i = 0; i < 52; ++i) {
       swap(cards[i], cards[rand() % 52]);
     }
   }
@@ -263,7 +277,17 @@ class Hand {
     combo.push_back(make_pair(f, first));
     combo.push_back(make_pair(m, middle));
     combo.push_back(make_pair(l, last));
-    combos.push_back(combo);
+
+    bool worthy = true;
+    for (auto prev_combo : combos) {
+      if (combo < prev_combo) {
+        worthy = false;
+        break;
+      }
+    }
+    if (worthy) {
+      combos.push_back(combo);
+    }
   }
 
   Set GetUnusedCards() {
@@ -484,6 +508,9 @@ class Hand {
   }
 
   void SortFromLowToHigh(Set& cards) {
+    if (cards.empty()) {
+      return;
+    }
     for (int i = 0; i < cards.size()-1; ++i) {
       for (int j = i+1; j < cards.size(); ++j) {
         if (cards[i]->rank > cards[j]->rank) {
@@ -494,6 +521,9 @@ class Hand {
   }
 
   void SortFromHighToLow(Set& cards) {
+    if (cards.empty()) {
+      return;
+    }
     for (int i = 0; i < cards.size()-1; ++i) {
       for (int j = i+1; j < cards.size(); ++j) {
         if (cards[i]->rank < cards[j]->rank) {
