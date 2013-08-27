@@ -77,18 +77,20 @@ class Hand {
   }
 
   void ArrangeSets() {
-    FindPatterns();
+    SortBySuit();
+    SortByRank();
     ShowHand();
-    ShowPatterns();
+    FindPatterns();
 
-    Natural();
-    Search();
+    if (Natural()) {
+      return;
+    } else {
+      ShowPatterns();
+      Search();
+    }
   }
 
   void FindPatterns() {
-    SortBySuit();
-    SortByRank();
-
     FindFlushes();
 
     FindMultiples();
@@ -143,9 +145,10 @@ class Hand {
     printf(", ");
   }
 
-  void Natural() {
+  bool Natural() {
     if (patterns[PAIR].size() == 6) {
       printf("NATURAL:\t*** 6 PAIRS ***\n");
+      return true;
     }
 
     bool three_suits = true;
@@ -157,7 +160,10 @@ class Hand {
     }
     if (three_suits) {
       printf("NATURAL:\t*** 3 SUITS ***\n");
+      return true;
     }
+
+    return false;
   }
 
   void Search() {
