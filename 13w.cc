@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <time.h>
 #include <vector>
 
@@ -550,7 +551,14 @@ class Hand {
 
 int main(int argc, char* argv[])
 {
-  int seed = argc > 1 ? atoi(argv[1]) : time(NULL);
+  int seed = time(NULL);
+  int c;
+  while ((c = getopt(argc, argv, "s:")) != -1) {
+    switch (c) {
+      case 's': seed = atoi(optarg); break;
+    }
+  }
+
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
   Deck deck;
