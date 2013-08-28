@@ -49,6 +49,8 @@ int bonus[3][NUM_PATTERNS] = {
 
 int natural_score = 30;
 
+const int sweep_points = 6;
+
 struct Card {
   int  suit;
   int  rank;
@@ -131,7 +133,8 @@ struct Deck {
 
 class Hand {
  public:
-  Hand() {}
+  Hand()
+    : points_(0) {}
 
   void DealFrom(Deck* deck) {
     for (int i = 0; i < 13; ++i) {
@@ -183,6 +186,45 @@ class Hand {
     }
   }
 
+  void Match(Hand& hand) {
+    int points = 0;
+    if (this->best.is_natural()) {
+      if (!hand.best.is_natural()) {
+        points = sweep_points;
+      } else {
+        // Tie.
+      }
+    } else {
+      if (hand.best.is_natural()) {
+        points = -sweep_points;
+      } else {
+        // Match sets one by one.
+        int win_count = 0;
+        for (int i = 0; i < 3; i++) {
+          int result = Compare(this->best[i].second, this->best[i].first,
+                               hand.best[i].second, hand.best[i].first);
+          win_count += result;
+          if (result == 1) {
+            points += bonus[i][this->best[i].first];
+          } else if (result == -1) {
+            points -= bonus[i][hand.best[i].first];
+          }
+        }
+        if (win_count == 3 || win_count == -3) {
+          points *= 2;
+        }
+      }
+    }
+    this->AddPoints(points);
+    hand.AddPoints(-points);
+  }
+
+  void AddPoints(int points) {
+    points_ += points;
+  }
+
+  int points() const { return points_; }
+
   void FindPatterns() {
     FindFlushes();
 
@@ -198,6 +240,7 @@ class Hand {
     // ShowCombos(naturals, natural_type);
     // ShowCombos(combos, combo_type);
     ShowCombo(best);
+    printf("POINTS: %d\n", points_);
   }
 
   void ShowHand() {
@@ -485,7 +528,9 @@ class Hand {
     else if (p1 > p2)
       return 1;
 
-    for (int i = pattern_sizes[p1]-1; i >= 0; --i) {
+    assert(first.size() == second.size());
+
+    for (int i = first.size()-1; i >= 0; --i) {
       if (first[i]->rank < second[i]->rank) {
         return -1;
       } else if (first[i]->rank > second[i]->rank) {
@@ -712,6 +757,7 @@ class Hand {
   vector<Combo> combos;
   vector<Combo> naturals;
   Combo best;
+  int points_;
 };
 
 void ReadCards(const char* arg)
@@ -758,6 +804,15 @@ int main(int argc, char* argv[])
   for (int i = 0; i < 4; i++) {
     hands[i].DealFrom(&deck);
     hands[i].ArrangeSets();
+  }
+
+  for (int i = 0; i < 3; i++) {
+    for (int j = i+1; j < 4; j++) {
+      hands[i].Match(hands[j]);
+    }
+  }
+
+  for (int i = 0; i < 4; i++) {
     hands[i].Show();
   }
 
