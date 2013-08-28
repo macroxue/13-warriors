@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,8 +15,8 @@ enum Rank {
   JACK, QUEEN, KING, ACE, NUM_RANKS
 };
 
-const char suit_symbol[] = "SHCD";
-const char rank_symbol[] = "123456789TJQKA";
+const char suit_symbols[] = "SHCD";
+const char rank_symbols[] = "123456789TJQKA";
 
 enum PatternName {
   JUNK, PAIR, TWO_PAIRS, TRIPLE, STRAIGHT, FLUSH, FULL_HOUSE,
@@ -42,8 +43,8 @@ struct Card {
   int  rank;
   bool in_use;
 
-  void Show() {
-    printf("%c%c ", suit_symbol[suit], rank_symbol[rank]);
+  void Show(FILE *fp = stdout) {
+    fprintf(fp, "%c%c ", suit_symbols[suit], rank_symbols[rank]);
   }
 };
 
@@ -68,9 +69,18 @@ struct Deck {
   Deck() : top(0) {
     for (int i = 0; i < 52; ++i) {
       cards[i].suit = i/13;
-      cards[i].rank = 13 - i%13;
+      cards[i].rank = i%13+1;
       cards[i].in_use = false;
     }
+  }
+
+  Card* FindCard(int suit, int rank) {
+    if (rank == ONE) {
+      rank = ACE;
+    }
+    Card* card = &cards[suit*13 + rank-1];
+    assert(card->suit == suit && card->rank == rank);
+    return card;
   }
 
   void Shuffle() {
@@ -98,7 +108,22 @@ class Hand {
     }
   }
 
+  void AddCard(Card* card) {
+    if (card->in_use) {
+      fprintf(stderr, "Duplicate card: ");
+      card->Show(stderr);
+      fprintf(stderr, "\n");
+      exit(-1);
+    }
+    cards.push_back(card);
+    card->in_use = true;
+  }
+
   void ArrangeSets() {
+    if (cards.size() != 13) {
+      fprintf(stderr, "Wrong number of cards: %ld\n", cards.size());
+      exit(-1);
+    }
     SortBySuit();
     SortByRank();
     ShowHand();
@@ -210,6 +235,7 @@ class Hand {
   }
 
   void Search() {
+    SetInUse(cards, false);
     printf("SETS:");
     for (int last = NUM_PATTERNS-1; last >= 0; --last) {
       for (int middle = last; middle >= 0; --middle) {
@@ -549,12 +575,36 @@ class Hand {
   vector<Combo> combos;
 };
 
+void ReadCards(const char* arg)
+{
+  Deck deck;
+  Hand hand;
+  int suit = -1;
+  for (; *arg; ++arg) {
+    int c = toupper(*arg);
+    char* s = strchr(const_cast<char*>(suit_symbols), c);
+    char* r = strchr(const_cast<char*>(rank_symbols), c);
+    if (s) {
+      suit = s - suit_symbols;
+    } else if (r) {
+      if (suit == -1) {
+        fprintf(stderr, "Missing suit symbol\n");
+        exit(-1);
+      }
+      int rank = r - rank_symbols;
+      hand.AddCard(deck.FindCard(suit, rank));
+    }
+  }
+  hand.ArrangeSets();
+}
+
 int main(int argc, char* argv[])
 {
   int seed = time(NULL);
   int c;
-  while ((c = getopt(argc, argv, "s:")) != -1) {
+  while ((c = getopt(argc, argv, "i:s:")) != -1) {
     switch (c) {
+      case 'i': ReadCards(optarg); exit(0);
       case 's': seed = atoi(optarg); break;
     }
   }
