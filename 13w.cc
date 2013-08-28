@@ -125,17 +125,16 @@ class Hand {
       exit(-1);
     }
     SortBySuit();
+    if (ThreeSuits()) {
+      return;
+    }
     SortByRank();
     ShowHand();
     FindPatterns();
 
-    if (Natural()) {
-      return;
-    } else {
-      ShowPatterns();
-      Search();
-      ShowCombos();
-    }
+    ShowPatterns();
+    Search();
+    ShowCombos();
   }
 
   void FindPatterns() {
@@ -213,12 +212,7 @@ class Hand {
     }
   }
 
-  bool Natural() {
-    if (patterns[PAIR].size() == 6) {
-      printf("NATURAL:\t*** 6 PAIRS ***\n");
-      return true;
-    }
-
+  bool ThreeSuits() {
     bool three_suits = true;
     for (auto suit : suits) {
       if (suit.size() != 0 && suit.size() != 3 && suit.size() != 5) {
@@ -228,9 +222,15 @@ class Hand {
     }
     if (three_suits) {
       printf("NATURAL:\t*** 3 SUITS ***\n");
+    }
+    return three_suits;
+  }
+
+  bool SixPairs() {
+    if (patterns[PAIR].size() == 6) {
+      printf("NATURAL:\t*** 6 PAIRS ***\n");
       return true;
     }
-
     return false;
   }
 
@@ -415,18 +415,34 @@ class Hand {
 
   void FindMultiples() {
     for (auto rank : ranks) {
-      switch (rank.size()) {
-        case 2:
+      if (rank.size() == 2) {
           patterns[PAIR].push_back(rank);
-          break;
-        case 3:
-          patterns[TRIPLE].push_back(rank);
-          break;
-        case 4:
-          patterns[FOUR_OF_A_KIND].push_back(rank);
-          break;
       }
     }
+    if (SixPairs()) {
+      return;
+    }
+    for (auto rank : ranks) {
+      if (rank.size() == 3) {
+        patterns[TRIPLE].push_back(rank);
+        for (auto pair : TripleToPairs(rank)) {
+          patterns[PAIR].push_back(pair);
+        }
+      }
+    }
+    for (auto rank : ranks) {
+      if (rank.size() == 4) {
+          patterns[FOUR_OF_A_KIND].push_back(rank);
+      }
+    }
+  }
+
+  vector<Set> TripleToPairs(Set triple) {
+    vector<Set> pairs;
+    pairs.push_back(Set{triple[0], triple[1]});
+    pairs.push_back(Set{triple[0], triple[2]});
+    pairs.push_back(Set{triple[1], triple[2]});
+    return pairs;
   }
 
   void FindTwoPairs() {
@@ -443,7 +459,9 @@ class Hand {
     const auto& triples = patterns[TRIPLE];
     for (int i = 0; i < pairs.size(); ++i) {
       for (int j = 0; j < triples.size(); ++j) {
-        patterns[FULL_HOUSE].push_back(Combine(pairs[i], triples[j]));
+        if (pairs[i][0]->rank != triples[j][0]->rank) {
+          patterns[FULL_HOUSE].push_back(Combine(pairs[i], triples[j]));
+        }
       }
     }
   }
