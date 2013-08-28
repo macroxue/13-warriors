@@ -126,11 +126,16 @@ class Hand {
     }
     SortBySuit();
     if (ThreeSuits()) {
+      // TODO: Bonus like royal flush should be kept.
       return;
     }
     SortByRank();
     ShowHand();
     FindPatterns();
+    if (ThreeStraights()) {
+      // TODO: Bonus like royal flush should be kept.
+      return;
+    }
 
     ShowPatterns();
     Search();
@@ -230,6 +235,40 @@ class Hand {
     if (patterns[PAIR].size() == 6) {
       printf("NATURAL:\t*** 6 PAIRS ***\n");
       return true;
+    }
+    return false;
+  }
+
+  bool ThreeStraights() {
+    vector<Set> straights = patterns[STRAIGHT];
+    straights.insert(straights.end(), patterns[STRAIGHT_FLUSH].begin(),
+                     patterns[STRAIGHT_FLUSH].end());
+    straights.insert(straights.end(), patterns[ROYAL_FLUSH].begin(),
+                     patterns[ROYAL_FLUSH].end());
+
+    if (straights.size() < 2) {
+      return false;
+    }
+    SetInUse(cards, false);
+    for (int l = 0; l < straights.size(); ++l) {
+      SetInUse(straights[l], true);
+      for (int m = 0; m < straights.size(); ++m) {
+        if (IsInUse(straights[m]) ||
+            !InOrder(straights[m], STRAIGHT, straights[l], STRAIGHT)) {
+          continue;
+        }
+        SetInUse(straights[m], true);
+
+        Set unused_cards = GetUnusedCards();
+        SortFromLowToHigh(unused_cards);
+        if (IsStraight(unused_cards)) {
+          printf("NATURAL:\t*** 3 STRAIGHTS ***\n");
+          return true;
+        }
+
+        SetInUse(straights[m], false);
+      }
+      SetInUse(straights[l], false);
     }
     return false;
   }
@@ -402,9 +441,9 @@ class Hand {
       auto flushes = PickFlushes(suit);
       for (auto flush : flushes) {
         SortFromLowToHigh(flush);
-        if (IsFlushRoyal(flush)) {
+        if (IsRoyalFlush(flush)) {
           patterns[ROYAL_FLUSH].push_back(flush);
-        } else if (IsFlushStraight(flush)) {
+        } else if (IsStraight(flush)) {
           //patterns[STRAIGHT_FLUSH].push_back(flush);
         } else {
           patterns[FLUSH].push_back(flush);
@@ -481,8 +520,10 @@ class Hand {
       }
       auto straights = PickStraights(i);
       for (auto straight : straights) {
-        if (IsStraightFlush(straight)) {
-          patterns[STRAIGHT_FLUSH].push_back(straight);
+        if (IsFlush(straight)) {
+          if (!IsRoyalFlush(straight)) {
+            patterns[STRAIGHT_FLUSH].push_back(straight);
+          }
         } else {
           patterns[STRAIGHT].push_back(straight);
         }
@@ -533,24 +574,25 @@ class Hand {
     return set;
   }
 
-  bool IsFlushRoyal(Set flush) {
+  bool IsRoyalFlush(Set flush) {
     return flush.front()->rank == TEN && flush.back()->rank == ACE;
   }
 
-  bool IsFlushStraight(Set flush) {
-    // The case of A2345 but sorted as 2345A.
-    if (flush[0]->rank == TWO &&
-        flush[3]->rank == FIVE &&
-        flush[4]->rank == ACE) {
-      return true;
+  bool IsStraight(Set set) {
+    int num_cards = set.size();
+    for (int i = 0; i < num_cards-1; ++i) {
+      if (set[i]->rank + 1 != set[i+1]->rank) {
+        return false;
+      }
     }
-    // Other cases.
-    return flush.front()->rank + 4 == flush.back()->rank;
+    // The case of A2345 but sorted as 2345A.
+    return set[num_cards-2]->rank + 1 == set[num_cards-1]->rank ||
+      (set[0]->rank == TWO && set[num_cards-1]->rank == ACE);
   }
 
-  bool IsStraightFlush(Set straight) {
-    int suit = straight[0]->suit;
-    for (auto card : straight) {
+  bool IsFlush(Set set) {
+    int suit = set[0]->suit;
+    for (auto card : set) {
       if (card->suit != suit) {
         return false;
       }
