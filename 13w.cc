@@ -32,6 +32,9 @@ const int pattern_sizes[NUM_PATTERNS] = {
   0, 2, 4, 3, 5, 5, 5, 4, 5, 5
 };
 
+const char natural_type[] = "NATURAL";
+const char combo_type[] = "COMBO";
+
 int utility[3][NUM_PATTERNS] = {
   {3, 6, 0,  9, 0, 0,  0,  0,  0,  0},
   {0, 1, 3,  5, 7, 9, 10, 10, 10, 10},
@@ -43,6 +46,8 @@ int bonus[3][NUM_PATTERNS] = {
   {1, 1, 1, 1, 1, 1, 2, 8, 10, 20},
   {1, 1, 1, 1, 1, 1, 1, 4, 5, 10},
 };
+
+int natural_score = 30;
 
 struct Card {
   int  suit;
@@ -132,20 +137,17 @@ class Hand {
     }
     SortBySuit();
     SortByRank();
-    ShowHand();
     if (ThreeSuits()) {
       // TODO: Bonus like royal flush should be kept.
-      return;
+      //return;
     }
     FindPatterns();
     if (ThreeStraights()) {
       // TODO: Bonus like royal flush should be kept.
-      return;
+      //return;
     }
 
-    ShowPatterns();
     Search();
-    ShowCombos();
   }
 
   void FindPatterns() {
@@ -155,6 +157,13 @@ class Hand {
     FindTwoPairs();
     FindFullHouses();
     FindStraights();
+  }
+
+  void Show() {
+    ShowHand();
+    // ShowPatterns();
+    ShowCombos(naturals, natural_type);
+    ShowCombos(combos, combo_type);
   }
 
   void ShowHand() {
@@ -209,20 +218,35 @@ class Hand {
     printf(", ");
   }
 
-  void ShowCombos() {
-    for (auto combo : combos) {
-      int f = combo[0].first;
-      int m = combo[1].first;
-      int l = combo[2].first;
-      printf("\t\t");
-      printf("%s %s %s , ", pattern_names[f], pattern_names[m], pattern_names[l]);
-      ShowSet(combo[0].second, f);
-      ShowSet(combo[1].second, m);
-      ShowSet(combo[2].second, l);
-      int score = utility[0][f]*bonus[0][f] + utility[1][m]*bonus[1][m]
-        + utility[2][l]*bonus[2][l];
-      printf("  %d\n", score);
+  void ShowCombos(const vector<Combo>& combos, const char* type) {
+    if (!combos.empty()) {
+      printf("%s:", type);
     }
+    for (const auto& combo : combos) {
+      ShowCombo(combo, type);
+    }
+  }
+
+  void ShowCombo(const Combo& combo, const char* type) {
+    printf("\t\t");
+    for (auto set : combo) {
+      printf("%s ", pattern_names[set.first]);
+    }
+    printf(", ");
+    for (auto set : combo) {
+      ShowSet(set.second, set.first);
+    }
+
+    int score = 0;
+    if (type == natural_type) {
+      score = natural_score;
+    } else {
+      for (int i = 0; i < 3; i++) {
+        int p = combo[i].first;
+        score += utility[i][p]*bonus[i][p];
+      }
+    }
+    printf("  %d\n", score);
   }
 
   bool ThreeSuits() {
@@ -234,14 +258,24 @@ class Hand {
       }
     }
     if (three_suits) {
-      printf("NATURAL:\t*** 3 SUITS ***\n");
+      Combo natural;
+      for (auto suit : suits) {
+        if (!suit.empty()) {
+          natural.push_back(make_pair(FLUSH, suit));
+        }
+      }
+      naturals.push_back(natural);
     }
     return three_suits;
   }
 
   bool SixPairs() {
     if (patterns[PAIR].size() == 6) {
-      printf("NATURAL:\t*** 6 PAIRS ***\n");
+      Combo natural;
+      for (auto set : patterns[PAIR]) {
+        natural.push_back(make_pair(PAIR, set));
+      }
+      naturals.push_back(natural);
       return true;
     }
     return false;
@@ -270,7 +304,11 @@ class Hand {
         Set unused_cards = GetUnusedCards();
         SortFromLowToHigh(unused_cards);
         if (IsStraight(unused_cards)) {
-          printf("NATURAL:\t*** 3 STRAIGHTS ***\n");
+          Combo natural;
+          natural.push_back(make_pair(STRAIGHT, unused_cards));
+          natural.push_back(make_pair(STRAIGHT, straights[m]));
+          natural.push_back(make_pair(STRAIGHT, straights[l]));
+          naturals.push_back(natural);
           return true;
         }
 
@@ -283,7 +321,6 @@ class Hand {
 
   void Search() {
     SetInUse(cards, false);
-    printf("SETS:");
     for (int last = NUM_PATTERNS-1; last >= 0; --last) {
       for (int middle = last; middle >= 0; --middle) {
         for (int first = middle; first >= 0; --first) {
@@ -437,6 +474,9 @@ class Hand {
   void SortBySuit() {
     for (auto card : cards) {
       suits[card->suit].push_back(card);
+    }
+    for (auto& suit : suits) {
+      SortFromLowToHigh(suit);
     }
   }
 
@@ -646,6 +686,7 @@ class Hand {
   Set ranks[NUM_RANKS];
   vector<Set> patterns[NUM_PATTERNS];
   vector<Combo> combos;
+  vector<Combo> naturals;
 };
 
 void ReadCards(const char* arg)
@@ -669,6 +710,7 @@ void ReadCards(const char* arg)
     }
   }
   hand.ArrangeSets();
+  hand.Show();
 }
 
 int main(int argc, char* argv[])
@@ -691,6 +733,7 @@ int main(int argc, char* argv[])
   for (int i = 0; i < 4; i++) {
     hands[i].DealFrom(&deck);
     hands[i].ArrangeSets();
+    hands[i].Show();
   }
 
   return 0;
