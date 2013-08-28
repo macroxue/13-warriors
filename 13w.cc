@@ -254,7 +254,7 @@ class Hand {
       SetInUse(straights[l], true);
       for (int m = 0; m < straights.size(); ++m) {
         if (IsInUse(straights[m]) ||
-            !InOrder(straights[m], STRAIGHT, straights[l], STRAIGHT)) {
+            Compare(straights[m], STRAIGHT, straights[l], STRAIGHT) == 1) {
           continue;
         }
         SetInUse(straights[m], true);
@@ -294,14 +294,14 @@ class Hand {
 
       for (int m = 0; m < patterns[middle].size(); ++m) {
         if (IsInUse(patterns[middle][m]) ||
-            !InOrder(patterns[middle][m], middle, patterns[last][l], last)) {
+            Compare(patterns[middle][m], middle, patterns[last][l], last) == 1) {
           continue;
         }
         SetInUse(patterns[middle][m], true);
 
         for (int f = 0; f < patterns[first].size(); ++f) {
           if (IsInUse(patterns[first][f]) ||
-              !InOrder(patterns[first][f], first, patterns[middle][m], middle)) {
+              Compare(patterns[first][f], first, patterns[middle][m], middle) == 1) {
             continue;
           }
           SetInUse(patterns[first][f], true);
@@ -405,20 +405,20 @@ class Hand {
     return false;
   }
 
-  bool InOrder(Set first, int p1, Set second, int p2) {
+  int Compare(Set first, int p1, Set second, int p2) {
     if (p1 < p2)
-      return true;
+      return -1;
     else if (p1 > p2)
-      return false;
+      return 1;
 
     for (int i = pattern_sizes[p1]-1; i >= 0; --i) {
       if (first[i]->rank < second[i]->rank) {
-        return true;
+        return -1;
       } else if (first[i]->rank > second[i]->rank) {
-        return false;
+        return 1;
       }
     }
-    return true;
+    return 0;
   }
 
   void SortBySuit() {
