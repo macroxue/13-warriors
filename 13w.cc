@@ -74,6 +74,23 @@ class Combo : public vector<pair<int,Set>> {
 
     return lose_count > 0 && win_count == 0;
   }
+
+  void Evaluate(bool is_natural) {
+    if (is_natural) {
+      score_ = natural_score;
+    } else {
+      score_ = 0;
+      for (int i = 0; i < 3; i++) {
+        int p = (*this)[i].first;
+        score_ += utility[i][p] * bonus[i][p];
+      }
+    }
+  }
+
+  int score() const { return score_; }
+
+ private:
+  int score_;
 };
 
 struct Deck {
@@ -148,6 +165,13 @@ class Hand {
     }
 
     Search();
+
+    for (auto& natural : naturals) {
+      natural.Evaluate(true);
+    }
+    for (auto& combo : combos) {
+      combo.Evaluate(false);
+    }
   }
 
   void FindPatterns() {
@@ -236,17 +260,7 @@ class Hand {
     for (auto set : combo) {
       ShowSet(set.second, set.first);
     }
-
-    int score = 0;
-    if (type == natural_type) {
-      score = natural_score;
-    } else {
-      for (int i = 0; i < 3; i++) {
-        int p = combo[i].first;
-        score += utility[i][p]*bonus[i][p];
-      }
-    }
-    printf("  %d\n", score);
+    printf("  %d\n", combo.score());
   }
 
   bool ThreeSuits() {
