@@ -76,6 +76,7 @@ class Combo : public vector<pair<int,Set>> {
   }
 
   void Evaluate(bool is_natural) {
+    is_natural_ = is_natural;
     if (is_natural) {
       score_ = natural_score;
     } else {
@@ -88,9 +89,11 @@ class Combo : public vector<pair<int,Set>> {
   }
 
   int score() const { return score_; }
+  bool is_natural() const { return is_natural_; }
 
  private:
   int score_;
+  bool is_natural_;
 };
 
 struct Deck {
@@ -168,9 +171,15 @@ class Hand {
 
     for (auto& natural : naturals) {
       natural.Evaluate(true);
+      if (best.empty() || natural.score() > best.score()) {
+        best = natural;
+      }
     }
     for (auto& combo : combos) {
       combo.Evaluate(false);
+      if (best.empty() || combo.score() > best.score()) {
+        best = combo;
+      }
     }
   }
 
@@ -186,8 +195,9 @@ class Hand {
   void Show() {
     ShowHand();
     // ShowPatterns();
-    ShowCombos(naturals, natural_type);
-    ShowCombos(combos, combo_type);
+    // ShowCombos(naturals, natural_type);
+    // ShowCombos(combos, combo_type);
+    ShowCombo(best);
   }
 
   void ShowHand() {
@@ -247,11 +257,11 @@ class Hand {
       printf("%s:", type);
     }
     for (const auto& combo : combos) {
-      ShowCombo(combo, type);
+      ShowCombo(combo);
     }
   }
 
-  void ShowCombo(const Combo& combo, const char* type) {
+  void ShowCombo(const Combo& combo) {
     printf("\t\t");
     for (auto set : combo) {
       printf("%s ", pattern_names[set.first]);
@@ -701,6 +711,7 @@ class Hand {
   vector<Set> patterns[NUM_PATTERNS];
   vector<Combo> combos;
   vector<Combo> naturals;
+  Combo best;
 };
 
 void ReadCards(const char* arg)
