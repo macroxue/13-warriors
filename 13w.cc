@@ -30,6 +30,12 @@ const int pattern_sizes[NUM_PATTERNS] = {
   0, 2, 4, 3, 5, 5, 5, 4, 5, 5
 };
 
+int utility[3][NUM_PATTERNS] = {
+  {3, 6, 0, 9, 0, 0, 0, 0, 0, 0},
+  {0, 1, 3, 5, 6, 7, 8, 9, 9, 9},
+  {0, 0, 0, 1, 3, 5, 7, 9, 9, 9},
+};
+
 struct Card {
   int  suit;
   int  rank;
@@ -177,7 +183,7 @@ class Hand {
       ShowSet(combo[0].second, f);
       ShowSet(combo[1].second, m);
       ShowSet(combo[2].second, l);
-      printf("\n");
+      printf("  %d\n", utility[0][f] + utility[1][m] + utility[2][l]);
     }
   }
 
