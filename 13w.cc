@@ -192,11 +192,11 @@ class Hand {
 
   void ShowSet(Set set, int p) {
     for (int i = 0; i < set.size(); ++i) {
-      if (i == pattern_sizes[p]) {
+      if (set.size() > pattern_sizes[p] && i == 0) {
         printf("[ ");
       }
       set[i]->Show();
-      if (i >= pattern_sizes[p] && i == set.size()-1) {
+      if (set.size() > pattern_sizes[p] && i+1 == set.size() - pattern_sizes[p]) {
         printf("] ");
       }
     }
@@ -331,18 +331,23 @@ class Hand {
     int next = 0;
 
     // Special case when the first and the middle are junks.
-    if (first.empty() && middle.empty()) {
+    if (f == JUNK && m == JUNK) {
       swap(unused_cards[0], unused_cards[3]);
     }
 
     for (int i = first.size(); i < 3; ++i) {
-      first.push_back(unused_cards[next++]);
+      first.insert(first.begin(), unused_cards[next++]);
     }
     for (int i = middle.size(); i < 5; ++i) {
-      middle.push_back(unused_cards[next++]);
+      middle.insert(middle.begin(), unused_cards[next++]);
     }
     for (int i = last.size(); i < 5; ++i) {
-      last.push_back(unused_cards[next++]);
+      last.insert(last.begin(), unused_cards[next++]);
+    }
+
+    // Special case when the first and the middle are junks.
+    if (f == JUNK && m == JUNK) {
+      SortFromLowToHigh(first);
     }
 
     Combo combo;
