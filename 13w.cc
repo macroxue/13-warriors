@@ -131,12 +131,12 @@ class Hand {
       exit(-1);
     }
     SortBySuit();
+    SortByRank();
+    ShowHand();
     if (ThreeSuits()) {
       // TODO: Bonus like royal flush should be kept.
       return;
     }
-    SortByRank();
-    ShowHand();
     FindPatterns();
     if (ThreeStraights()) {
       // TODO: Bonus like royal flush should be kept.
