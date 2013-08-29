@@ -45,7 +45,7 @@ struct Stat {
   double win_prob;
   int    wins;
   int    total;
-} stats[3][NUM_PATTERNS];
+} stats[3][NUM_PATTERNS][NUM_RANKS];
 
 int bonus[3][NUM_PATTERNS] = {
   {1, 1, 1, 3, 1, 1, 1, 1, 1, 1},
@@ -95,7 +95,8 @@ class Combo : public vector<pair<int,Set>> {
       score_ = 0;
       for (int i = 0; i < 3; i++) {
         int p = (*this)[i].first;
-        score_ += (2*stats[i][p].win_prob - 1) * bonus[i][p];
+        int r = (*this)[i].second.back()->rank;
+        score_ += (2*stats[i][p][r].win_prob - 1) * bonus[i][p];
       }
     }
   }
@@ -218,17 +219,19 @@ class Hand {
         for (int i = 0; i < 3; i++) {
           int p1 = this->best[i].first;
           int p2 = hand.best[i].first;
+          int r1 = this->best[i].second.back()->rank;
+          int r2 = hand.best[i].second.back()->rank;
           int result = Compare(best[i].second, p1, hand.best[i].second, p2);
           win_count += result;
           if (result == 1) {
             points += bonus[i][p1];
-            ++stats[i][p1].wins;
+            ++stats[i][p1][r1].wins;
           } else if (result == -1) {
             points -= bonus[i][p2];
-            ++stats[i][p2].wins;
+            ++stats[i][p2][r2].wins;
           }
-          ++stats[i][p1].total;
-          ++stats[i][p2].total;
+          ++stats[i][p1][r1].total;
+          ++stats[i][p2][r2].total;
         }
         if (win_count == 3 || win_count == -3) {
           points *= 2;
@@ -832,9 +835,11 @@ int main(int argc, char* argv[])
 
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < NUM_PATTERNS; ++j) {
-      stats[i][j].win_prob = win_prob[i][j];
-      stats[i][j].wins = 0;
-      stats[i][j].total = 0;
+      for (int r = 0; r < NUM_RANKS; ++r) {
+        stats[i][j][r].win_prob = win_prob[i][j];
+        stats[i][j][r].wins = 0;
+        stats[i][j][r].total = 0;
+      }
     }
   }
 
@@ -861,17 +866,23 @@ int main(int argc, char* argv[])
 #endif
     }
 
-    for (int j = 0; j < NUM_PATTERNS; ++j) {
-      printf("%11s", pattern_names[j]);
-    }
-    printf("\n");
-    for (int i = 0; i < 3; ++i) {
+    for (int r = 0; r < NUM_RANKS; ++r) {
       for (int j = 0; j < NUM_PATTERNS; ++j) {
-        stats[i][j].win_prob = double(stats[i][j].wins)/stats[i][j].total;
-        printf("%11.2f", stats[i][j].win_prob);
-        //printf("   %+4d/%3d", stats[i][j].wins, stats[i][j].total);
+        printf("%11s", pattern_names[j]);
       }
-      printf("\n");
+      printf("%11c\n", rank_symbols[r]);
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < NUM_PATTERNS; ++j) {
+          auto* stat = &stats[i][j][r];
+          if (stat->total >= 10) {
+            stat->win_prob = double(stat->wins)/stat->total;
+            printf("%11.2f", stat->win_prob);
+          } else {
+            printf("%11c", '-');
+          }
+        }
+        printf("\n");
+      }
     }
   }
 
