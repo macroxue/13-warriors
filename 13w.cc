@@ -641,7 +641,11 @@ class Hand {
     const auto& pairs = patterns[PAIR];
     for (int i = 0; i < pairs.size(); ++i) {
       for (int j = i+1; j < pairs.size(); ++j) {
-        patterns[TWO_PAIRS].push_back(Combine(pairs[i], pairs[j]));
+        if (pairs[i].back()->rank < pairs[j].back()->rank) {
+          patterns[TWO_PAIRS].push_back(Combine(pairs[i], pairs[j]));
+        } else if (pairs[i].back()->rank > pairs[j].back()->rank) {
+          patterns[TWO_PAIRS].push_back(Combine(pairs[j], pairs[i]));
+        }
       }
     }
   }
