@@ -35,6 +35,18 @@ const int pattern_sizes[NUM_PATTERNS] = {
 const char natural_type[] = "NATURAL";
 const char combo_type[] = "COMBO";
 
+#if 0
+  JUNK       PAIR  TWO_PAIRS     TRIPLE   STRAIGHT      FLUSH FULL_HOUSE FOUR_OF_A_KIND STRAIGHT_FLUSH ROYAL_FLUSH
+0~0.33  0.47~0.97          -  0.99~1.00          -          -          -          -          -          -
+0~0.01  0.01~0.33  0.36~0.64  0.63~0.71  0.75~0.90  0.93~0.97  0.96~1.00          -          -          -
+     -  0.00~0.02  0.02~0.13  0.13~0.13  0.16~0.36  0.37~0.60  0.65~0.94  0.94~0.97  0.98~0.99       1.00
+ * Never have Ace-high two pairs!!!
+ 50%                66%           75%                 80%               90%
+ a pair             pair of 9     pair of J           pair of Q         pair of K
+ 9-high two-pairs   triple        straight            7-high straight   flush
+ K-high flush       full-house    7-high full-house   9-high            K-high full-house
+#endif
+
 double win_prob[3][NUM_PATTERNS] = {
   {.3, .6,  0, .9,  0,  0,  0, 0, 0, 0},
   { 0, .1, .3, .5, .7, .9,  1, 1, 1, 1},
@@ -146,6 +158,26 @@ class Hand {
  public:
   Hand()
     : points_(0) {}
+
+  Hand(const char* arg)
+    : points_(0) {
+    int suit = -1;
+    for (; *arg; ++arg) {
+      int c = toupper(*arg);
+      char* s = strchr(const_cast<char*>(suit_symbols), c);
+      char* r = strchr(const_cast<char*>(rank_symbols), c);
+      if (s) {
+        suit = s - suit_symbols;
+      } else if (r) {
+        if (suit == -1) {
+          fprintf(stderr, "Missing suit symbol\n");
+          exit(-1);
+        }
+        int rank = r - rank_symbols;
+        AddCard(deck.FindCard(suit, rank));
+      }
+    }
+  }
 
   void DealFrom(Deck* deck) {
     for (int i = 0; i < 13; ++i) {
@@ -259,11 +291,11 @@ class Hand {
 
   void Show() {
     ShowHand();
-    // ShowPatterns();
-    // ShowCombos(naturals, natural_type);
-    // ShowCombos(combos, combo_type);
     ShowCombo(best);
-    printf("POINTS: %d\n", points_);
+    ShowCombos(naturals, natural_type);
+    ShowCombos(combos, combo_type);
+    // ShowPatterns();
+    // printf("POINTS: %d\n", points_);
   }
 
   void ShowHand() {
@@ -784,7 +816,7 @@ class Hand {
   }
 
  private:
-  Card all_cards[52];
+  Deck deck;
   Set cards;
   Set suits[NUM_SUITS];
   Set ranks[NUM_RANKS];
@@ -795,45 +827,28 @@ class Hand {
   int points_;
 };
 
-void ReadCards(const char* arg)
-{
-  Deck deck;
-  Hand hand;
-  int suit = -1;
-  for (; *arg; ++arg) {
-    int c = toupper(*arg);
-    char* s = strchr(const_cast<char*>(suit_symbols), c);
-    char* r = strchr(const_cast<char*>(rank_symbols), c);
-    if (s) {
-      suit = s - suit_symbols;
-    } else if (r) {
-      if (suit == -1) {
-        fprintf(stderr, "Missing suit symbol\n");
-        exit(-1);
+void ShowWinningProbabilities() {
+  for (int r = 0; r < NUM_RANKS; ++r) {
+    for (int j = 0; j < NUM_PATTERNS; ++j) {
+      printf("%11s", pattern_names[j]);
+    }
+    printf("%11c\n", rank_symbols[r]);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < NUM_PATTERNS; ++j) {
+        auto* stat = &stats[i][j][r];
+        if (stat->total >= 10) {
+          stat->win_prob = double(stat->wins)/stat->total;
+          printf("%11.2f", stat->win_prob);
+        } else {
+          printf("%11c", '-');
+        }
       }
-      int rank = r - rank_symbols;
-      hand.AddCard(deck.FindCard(suit, rank));
+      printf("\n");
     }
   }
-  hand.ArrangeSets();
-  hand.Show();
 }
 
-int main(int argc, char* argv[])
-{
-  int rounds = 1;
-  int update_cycle = 100;
-  int seed = time(NULL);
-  int c;
-  while ((c = getopt(argc, argv, "c:i:r:s:")) != -1) {
-    switch (c) {
-      case 'c': update_cycle = atoi(optarg); break;
-      case 'i': ReadCards(optarg); exit(0);
-      case 'r': rounds = atoi(optarg); break;
-      case 's': seed = atoi(optarg); break;
-    }
-  }
-
+void Learn(int seed, int rounds, int update_cycle) {
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
 
@@ -869,27 +884,33 @@ int main(int argc, char* argv[])
       }
 #endif
     }
+  }
 
-    for (int r = 0; r < NUM_RANKS; ++r) {
-      for (int j = 0; j < NUM_PATTERNS; ++j) {
-        printf("%11s", pattern_names[j]);
-      }
-      printf("%11c\n", rank_symbols[r]);
-      for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < NUM_PATTERNS; ++j) {
-          auto* stat = &stats[i][j][r];
-          if (stat->total >= 10) {
-            stat->win_prob = double(stat->wins)/stat->total;
-            printf("%11.2f", stat->win_prob);
-          } else {
-            printf("%11c", '-');
-          }
-        }
-        printf("\n");
-      }
+  ShowWinningProbabilities();
+}
+
+int main(int argc, char* argv[]) {
+  char *input = NULL;
+  int rounds = 30;
+  int update_cycle = 30;
+  int seed = time(NULL);
+  int c;
+  while ((c = getopt(argc, argv, "c:i:r:s:")) != -1) {
+    switch (c) {
+      case 'c': update_cycle = atoi(optarg); break;
+      case 'i': input = optarg; break;
+      case 'r': rounds = atoi(optarg); break;
+      case 's': seed = atoi(optarg); break;
     }
   }
 
+  Learn(seed, rounds, update_cycle);
+  if (input) {
+    Deck deck;
+    Hand hand(input);
+    hand.ArrangeSets();
+    hand.Show();
+  }
   return 0;
 }
 
