@@ -35,11 +35,17 @@ const int pattern_sizes[NUM_PATTERNS] = {
 const char natural_type[] = "NATURAL";
 const char combo_type[] = "COMBO";
 
-int utility[3][NUM_PATTERNS] = {
-  {3, 6, 0,  9, 0, 0,  0,  0,  0,  0},
-  {0, 1, 3,  5, 7, 9, 10, 10, 10, 10},
-  {0, 0, 0,  2, 4, 6,  8, 10, 10, 10},
+double win_prob[3][NUM_PATTERNS] = {
+  {.3, .6,  0, .9,  0,  0,  0, 0, 0, 0},
+  { 0, .1, .3, .5, .7, .9,  1, 1, 1, 1},
+  { 0,  0,  0, .2, .4, .6, .8, 1, 1, 1},
 };
+
+struct Stat {
+  double win_prob;
+  int    wins;
+  int    total;
+} stats[3][NUM_PATTERNS];
 
 int bonus[3][NUM_PATTERNS] = {
   {1, 1, 1, 3, 1, 1, 1, 1, 1, 1},
@@ -64,6 +70,10 @@ struct Card {
 typedef vector<Card*> Set;
 class Combo : public vector<pair<int,Set>> {
  public:
+  Combo()
+    : score_(0), is_natural_(false) {
+  }
+
   bool operator < (const Combo& c) {
     int lose_count = 0;
     for (int i = 0; i < 3; ++i) {
@@ -85,16 +95,16 @@ class Combo : public vector<pair<int,Set>> {
       score_ = 0;
       for (int i = 0; i < 3; i++) {
         int p = (*this)[i].first;
-        score_ += utility[i][p] * bonus[i][p];
+        score_ += (2*stats[i][p].win_prob - 1) * bonus[i][p];
       }
     }
   }
 
-  int score() const { return score_; }
+  double score() const { return score_; }
   bool is_natural() const { return is_natural_; }
 
  private:
-  int score_;
+  double score_;
   bool is_natural_;
 };
 
@@ -172,6 +182,11 @@ class Hand {
 
     Search();
 
+    if (naturals.empty() && combos.empty()) {
+      ShowHand();
+      ShowPatterns();
+    }
+
     for (auto& natural : naturals) {
       natural.Evaluate(true);
       if (best.empty() || natural.score() > best.score()) {
@@ -201,14 +216,19 @@ class Hand {
         // Match sets one by one.
         int win_count = 0;
         for (int i = 0; i < 3; i++) {
-          int result = Compare(this->best[i].second, this->best[i].first,
-                               hand.best[i].second, hand.best[i].first);
+          int p1 = this->best[i].first;
+          int p2 = hand.best[i].first;
+          int result = Compare(best[i].second, p1, hand.best[i].second, p2);
           win_count += result;
           if (result == 1) {
-            points += bonus[i][this->best[i].first];
+            points += bonus[i][p1];
+            ++stats[i][p1].wins;
           } else if (result == -1) {
-            points -= bonus[i][hand.best[i].first];
+            points -= bonus[i][p2];
+            ++stats[i][p2].wins;
           }
+          ++stats[i][p1].total;
+          ++stats[i][p2].total;
         }
         if (win_count == 3 || win_count == -3) {
           points *= 2;
@@ -313,7 +333,7 @@ class Hand {
     for (auto set : combo) {
       ShowSet(set.second, set.first);
     }
-    printf("  %d\n", combo.score());
+    printf("  %.2f\n", combo.score());
   }
 
   bool ThreeSuits() {
@@ -337,10 +357,17 @@ class Hand {
   }
 
   bool SixPairs() {
-    if (patterns[PAIR].size() == 6) {
+    if (patterns[PAIR].size() + patterns[TRIPLE].size()
+        + patterns[FOUR_OF_A_KIND].size()*2 == 6) {
       Combo natural;
       for (auto set : patterns[PAIR]) {
         natural.push_back(make_pair(PAIR, set));
+      }
+      for (auto set : patterns[TRIPLE]) {
+        natural.push_back(make_pair(TRIPLE, set));
+      }
+      for (auto set : patterns[FOUR_OF_A_KIND]) {
+        natural.push_back(make_pair(FOUR_OF_A_KIND, set));
       }
       naturals.push_back(natural);
       return true;
@@ -466,14 +493,15 @@ class Hand {
     combo.push_back(make_pair(f, first));
     combo.push_back(make_pair(m, middle));
     combo.push_back(make_pair(l, last));
-
     bool worthy = true;
+#if 0
     for (auto prev_combo : combos) {
       if (combo < prev_combo) {
         worthy = false;
         break;
       }
     }
+#endif
     if (worthy) {
       combos.push_back(combo);
     }
@@ -505,6 +533,8 @@ class Hand {
   }
 
   bool Waste() {
+#if 0
+    // TODO: Problem breaking aa bb cc dd 23456.
     for (auto pattern : patterns) {
       for (auto set : pattern) {
         bool in_use = false;
@@ -519,6 +549,7 @@ class Hand {
         }
       }
     }
+#endif
     return false;
   }
 
@@ -578,22 +609,19 @@ class Hand {
     for (auto rank : ranks) {
       if (rank.size() == 2) {
           patterns[PAIR].push_back(rank);
+      } else if (rank.size() == 3) {
+        patterns[TRIPLE].push_back(rank);
+      } else if (rank.size() == 4) {
+        patterns[FOUR_OF_A_KIND].push_back(rank);
       }
     }
     if (SixPairs()) {
       return;
     }
-    for (auto rank : ranks) {
-      if (rank.size() == 3) {
-        patterns[TRIPLE].push_back(rank);
-        for (auto pair : TripleToPairs(rank)) {
-          patterns[PAIR].push_back(pair);
-        }
-      }
-    }
-    for (auto rank : ranks) {
-      if (rank.size() == 4) {
-          patterns[FOUR_OF_A_KIND].push_back(rank);
+    // Break triples into pairs.
+    for (auto triple : patterns[TRIPLE]) {
+      for (auto pair : TripleToPairs(triple)) {
+        patterns[PAIR].push_back(pair);
       }
     }
   }
@@ -786,34 +814,65 @@ void ReadCards(const char* arg)
 
 int main(int argc, char* argv[])
 {
+  int rounds = 1;
+  int update_cycle = 100;
   int seed = time(NULL);
   int c;
-  while ((c = getopt(argc, argv, "i:s:")) != -1) {
+  while ((c = getopt(argc, argv, "c:i:r:s:")) != -1) {
     switch (c) {
+      case 'c': update_cycle = atoi(optarg); break;
       case 'i': ReadCards(optarg); exit(0);
+      case 'r': rounds = atoi(optarg); break;
       case 's': seed = atoi(optarg); break;
     }
   }
 
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
-  Deck deck;
-  deck.Shuffle();
 
-  Hand hands[4];
-  for (int i = 0; i < 4; i++) {
-    hands[i].DealFrom(&deck);
-    hands[i].ArrangeSets();
-  }
-
-  for (int i = 0; i < 3; i++) {
-    for (int j = i+1; j < 4; j++) {
-      hands[i].Match(hands[j]);
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < NUM_PATTERNS; ++j) {
+      stats[i][j].win_prob = win_prob[i][j];
+      stats[i][j].wins = 0;
+      stats[i][j].total = 0;
     }
   }
 
-  for (int i = 0; i < 4; i++) {
-    hands[i].Show();
+  for (int r = 0; r < rounds; ++r) {
+    for (int f = 0; f < update_cycle; ++f) {
+      Deck deck;
+      deck.Shuffle();
+
+      Hand hands[4];
+      for (int i = 0; i < 4; ++i) {
+        hands[i].DealFrom(&deck);
+        hands[i].ArrangeSets();
+      }
+
+      for (int i = 0; i < 3; ++i) {
+        for (int j = i+1; j < 4; j++) {
+          hands[i].Match(hands[j]);
+        }
+      }
+#if 0
+      for (int i = 0; i < 4; ++i) {
+        hands[i].Show();
+      }
+#endif
+    }
+
+    for (int j = 0; j < NUM_PATTERNS; ++j) {
+      printf("%11s", pattern_names[j]);
+    }
+    printf("\n");
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < NUM_PATTERNS; ++j) {
+        stats[i][j].win_prob = double(stats[i][j].wins)/stats[i][j].total;
+        printf("%11.2f", stats[i][j].win_prob);
+        //printf("   %+4d/%3d", stats[i][j].wins, stats[i][j].total);
+      }
+      printf("\n");
+    }
   }
 
   return 0;
