@@ -1,13 +1,15 @@
 #ifndef COMBO_H_
 #define COMBO_H_
 
+#include "pattern.h"
 #include "set.h"
 
-class Combo : public vector<pair<int,Set>> {
+class Combo : public vector<Pattern> {
  public:
   Combo();
+  Combo(Pattern first, Pattern middle, Pattern last);
 
-  bool operator < (const Combo& c);
+  void Show() const;
 
   double score() const { return score_; }
   bool is_natural() const { return is_natural_; }

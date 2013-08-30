@@ -38,15 +38,14 @@ class Hand {
   bool ThreeStraights();
 
   void Search();
-  void GenerateSets(int first, int middle, int last);
-  void AddCombo(int f, Set first, int m, Set middle, int l, Set last);
+  void GenerateCombos(int first, int middle, int last);
+  void AddCombo(Pattern first, Pattern middle, Pattern last);
 
   Set GetUnusedCards();
   void SetInUse(Set set, bool in_use);
   bool IsInUse(Set set);
   bool Waste();
 
-  int Compare(Set first, int p1, Set second, int p2);
   void SortBySuit();
   void SortByRank();
   void FindFlushes();
@@ -55,9 +54,9 @@ class Hand {
   void FindFullHouses();
   void FindStraights();
 
-  vector<Set> TripleToPairs(Set triple);
-  vector<Set> PickFlushes(Set suit);
-  vector<Set> PickStraights(int r);
+  vector<Pattern> TripleToPairs(Set triple);
+  vector<Pattern> PickFlushes(Set suit);
+  vector<Pattern> PickStraights(int r);
 
   Set Combine(Set set1, Set set2);
 
@@ -73,7 +72,7 @@ class Hand {
   Set cards;
   Set suits[NUM_SUITS];
   Set ranks[NUM_RANKS];
-  vector<Set> patterns[NUM_PATTERNS];
+  vector<Pattern> patterns[NUM_PATTERNS];
   vector<Combo> combos;
   vector<Combo> naturals;
   Combo best;

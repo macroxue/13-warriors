@@ -4,14 +4,21 @@ Combo::Combo()
   : score_(0), is_natural_(false) {
 }
 
-bool Combo::operator < (const Combo& c) {
-  int lose_count = 0;
-  for (int i = 0; i < 3; ++i) {
-    lose_count += (*this)[i].first < c[i].first;
+Combo::Combo(Pattern first, Pattern middle, Pattern last)
+  : score_(0), is_natural_(false) {
+  push_back(first);
+  push_back(middle);
+  push_back(last);
+}
+
+void Combo::Show() const {
+  printf("\t\t");
+  for (auto pattern : *this) {
+    printf("%s ", pattern_names[pattern.pattern()]);
   }
-  int win_count = 0;
-  for (int i = 0; i < 3; ++i) {
-    win_count += (*this)[i].first > c[i].first;
+  printf(", ");
+  for (auto pattern : *this) {
+    pattern.Show();
   }
-  return lose_count > 0 && win_count == 0;
+  printf("  %.2f\n", score());
 }

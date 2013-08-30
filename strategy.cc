@@ -3,7 +3,7 @@
 #include "hand.h"
 #include "strategy.h"
 
-void Strategy::Learn(int seed, int rounds, int update_cycle) {
+Strategy::Strategy() {
   static const double init_win_prob[3][NUM_PATTERNS] = {
     {.3, .6,  0, .9,  0,  0,  0, 0, 0, 0},
     { 0, .1, .3, .5, .7, .9,  1, 1, 1, 1},
@@ -18,7 +18,9 @@ void Strategy::Learn(int seed, int rounds, int update_cycle) {
       }
     }
   }
+}
 
+void Strategy::Learn(int seed, int rounds, int update_cycle) {
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
 
@@ -45,24 +47,38 @@ void Strategy::Learn(int seed, int rounds, int update_cycle) {
       }
 #endif
     }
+    UpdateWinningProbabilities();
   }
 }
 
-void Strategy::Update(int nth, const Set& set1, int p1, const Set& set2, int p2, int result) {
-  int r1 = set1.back()->rank;
-  int r2 = set2.back()->rank;
+void Strategy::Update(int nth, const Pattern& p1, const Pattern& p2, int result) {
+  int r1 = p1.back()->rank;
+  int r2 = p2.back()->rank;
   if (result == 1) {
-    ++stats[nth][p1][r1].wins;
+    ++stats[nth][p1.pattern()][r1].wins;
   } else if (result == -1) {
-    ++stats[nth][p2][r2].wins;
+    ++stats[nth][p2.pattern()][r2].wins;
   }
-  ++stats[nth][p1][r1].total;
-  ++stats[nth][p2][r2].total;
+  ++stats[nth][p1.pattern()][r1].total;
+  ++stats[nth][p2.pattern()][r2].total;
 }
 
-double Strategy::GetWinningProbability(int nth, int pattern, const Set& set) const {
-  int high_rank = set.back()->rank;
-  return stats[nth][pattern][high_rank].win_prob;
+double Strategy::GetWinningProbability(int nth, const Pattern& p) const {
+  int high_rank = p.set().back()->rank;
+  return stats[nth][p.pattern()][high_rank].win_prob;
+}
+
+void Strategy::UpdateWinningProbabilities() {
+  for (int r = 0; r < NUM_RANKS; ++r) {
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < NUM_PATTERNS; ++j) {
+        auto* stat = &stats[i][j][r];
+        if (stat->total >= 10) {
+          stat->win_prob = double(stat->wins)/stat->total;
+        }
+      }
+    }
+  }
 }
 
 void Strategy::ShowWinningProbabilities() {
@@ -75,7 +91,6 @@ void Strategy::ShowWinningProbabilities() {
       for (int j = 0; j < NUM_PATTERNS; ++j) {
         auto* stat = &stats[i][j][r];
         if (stat->total >= 10) {
-          stat->win_prob = double(stat->wins)/stat->total;
           printf("%11.2f", stat->win_prob);
         } else {
           printf("%11c", '-');

@@ -6,10 +6,12 @@
 
 class Strategy {
  public:
+  Strategy();
   void Learn(int seed, int rounds, int update_cycle);
-  void Update(int nth, const Set& set1, int p1, const Set& set2, int p2, int result);
+  void Update(int nth, const Pattern& p1, const Pattern& p2, int result);
 
-  double GetWinningProbability(int nth, int pattern, const Set& set) const;
+  double GetWinningProbability(int nth, const Pattern& p) const;
+  void UpdateWinningProbabilities();
   void ShowWinningProbabilities();
 
  private:
