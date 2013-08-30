@@ -26,14 +26,14 @@ Hand::Hand(const char* arg)
         exit(-1);
       }
       int rank = r - rank_symbols;
-      AddCard(deck.FindCard(suit, rank));
+      AddCard(deck_.FindCard(suit, rank));
     }
   }
 }
 
 void Hand::DealFrom(Deck* deck) {
   for (int i = 0; i < 13; ++i) {
-    cards.push_back(deck->DealOneCard());
+    cards_.push_back(deck->DealOneCard());
   }
 }
 
@@ -44,13 +44,13 @@ void Hand::AddCard(Card* card) {
     fprintf(stderr, "\n");
     exit(-1);
   }
-  cards.push_back(card);
+  cards_.push_back(card);
   card->in_use = true;
 }
 
 void Hand::ArrangeSets() {
-  if (cards.size() != 13) {
-    fprintf(stderr, "Wrong number of cards: %ld\n", cards.size());
+  if (cards_.size() != 13) {
+    fprintf(stderr, "Wrong number of cards: %ld\n", cards_.size());
     exit(-1);
   }
   SortBySuit();
@@ -67,21 +67,21 @@ void Hand::ArrangeSets() {
 
   Search();
 
-  if (naturals.empty() && combos.empty()) {
+  if (naturals_.empty() && combos_.empty()) {
     ShowHand();
     ShowPatterns();
   }
 
-  for (auto& natural : naturals) {
+  for (auto& natural : naturals_) {
     Evaluate(natural, true);
-    if (best.empty() || natural.score() > best.score()) {
-      best = natural;
+    if (best_.empty() || natural.score() > best_.score()) {
+      best_ = natural;
     }
   }
-  for (auto& combo : combos) {
+  for (auto& combo : combos_) {
     Evaluate(combo, false);
-    if (best.empty() || combo.score() > best.score()) {
-      best = combo;
+    if (best_.empty() || combo.score() > best_.score()) {
+      best_ = combo;
     }
   }
 }
@@ -102,21 +102,21 @@ void Hand::Evaluate(Combo& combo, bool is_natural) {
 
 void Hand::Match(Hand& hand) {
   int points = 0;
-  if (this->best.is_natural()) {
-    if (!hand.best.is_natural()) {
+  if (best_.is_natural()) {
+    if (!hand.best_.is_natural()) {
       points = sweep_points;
     } else {
       // Tie.
     }
   } else {
-    if (hand.best.is_natural()) {
+    if (hand.best_.is_natural()) {
       points = -sweep_points;
     } else {
       // Match sets one by one.
       int win_count = 0;
       for (int i = 0; i < 3; i++) {
-        auto& p1 = this->best[i];
-        auto& p2 = hand.best[i];
+        auto& p1 = best_[i];
+        auto& p2 = hand.best_[i];
         int result = p1.Compare(p2);
         win_count += result;
         if (result == 1) {
@@ -131,7 +131,7 @@ void Hand::Match(Hand& hand) {
       }
     }
   }
-  this->AddPoints(points);
+  AddPoints(points);
   hand.AddPoints(-points);
 }
 
@@ -150,9 +150,9 @@ void Hand::FindPatterns() {
 
 void Hand::Show() {
   ShowHand();
-  best.Show();
-  ShowCombos(naturals, "NATURAL");
-  ShowCombos(combos, "COMBO");
+  best_.Show();
+  ShowCombos(naturals_, "NATURAL");
+  ShowCombos(combos_, "COMBO");
   // ShowPatterns();
   // printf("POINTS: %d\n", points_);
 }
@@ -160,7 +160,7 @@ void Hand::Show() {
 void Hand::ShowHand() {
   printf("FULL HAND:\t");
   // SortFromLowToHigh by suit.
-  for (auto suit : suits) {
+  for (auto suit : suits_) {
     for (auto card : suit) {
       card->Show();
     }
@@ -170,7 +170,7 @@ void Hand::ShowHand() {
   }
   printf("\n\t\t");
   // SortFromLowToHigh by rank.
-  for (auto rank : ranks) {
+  for (auto rank : ranks_) {
     for (auto card : rank) {
       card->Show();
     }
@@ -183,12 +183,12 @@ void Hand::ShowHand() {
 
 void Hand::ShowPatterns() {
   for (int i = 0; i < NUM_PATTERNS; ++i) {
-    if (patterns[i].size()) {
+    if (patterns_[i].size()) {
       printf("%s:\t", pattern_names[i]);
       if (strlen(pattern_names[i]) < 8) {
         printf("\t");
       }
-      for (auto pattern : patterns[i]) {
+      for (auto pattern : patterns_[i]) {
         pattern.Show();
       }
       printf("\n");
@@ -207,7 +207,7 @@ void Hand::ShowCombos(const vector<Combo>& combos, const char* type) {
 
 bool Hand::ThreeSuits() {
   bool three_suits = true;
-  for (auto suit : suits) {
+  for (auto suit : suits_) {
     if (suit.size() != 0 && suit.size() != 3 && suit.size() != 5) {
       three_suits = false;
       break;
@@ -215,46 +215,46 @@ bool Hand::ThreeSuits() {
   }
   if (three_suits) {
     Combo natural;
-    for (auto suit : suits) {
+    for (auto suit : suits_) {
       if (!suit.empty()) {
         natural.push_back(Pattern(suit, FLUSH));
       }
     }
-    naturals.push_back(natural);
+    naturals_.push_back(natural);
   }
   return three_suits;
 }
 
 bool Hand::SixPairs() {
-  if (patterns[PAIR].size() + patterns[TRIPLE].size()
-      + patterns[FOUR_OF_A_KIND].size()*2 == 6) {
+  if (patterns_[PAIR].size() + patterns_[TRIPLE].size()
+      + patterns_[FOUR_OF_A_KIND].size()*2 == 6) {
     Combo natural;
-    for (auto pattern : patterns[PAIR]) {
+    for (auto pattern : patterns_[PAIR]) {
       natural.push_back(pattern);
     }
-    for (auto pattern : patterns[TRIPLE]) {
+    for (auto pattern : patterns_[TRIPLE]) {
       natural.push_back(pattern);
     }
-    for (auto pattern : patterns[FOUR_OF_A_KIND]) {
+    for (auto pattern : patterns_[FOUR_OF_A_KIND]) {
       natural.push_back(pattern);
     }
-    naturals.push_back(natural);
+    naturals_.push_back(natural);
     return true;
   }
   return false;
 }
 
 bool Hand::ThreeStraights() {
-  vector<Pattern> straights = patterns[STRAIGHT];
-  straights.insert(straights.end(), patterns[STRAIGHT_FLUSH].begin(),
-                   patterns[STRAIGHT_FLUSH].end());
-  straights.insert(straights.end(), patterns[ROYAL_FLUSH].begin(),
-                   patterns[ROYAL_FLUSH].end());
+  vector<Pattern> straights = patterns_[STRAIGHT];
+  straights.insert(straights.end(), patterns_[STRAIGHT_FLUSH].begin(),
+                   patterns_[STRAIGHT_FLUSH].end());
+  straights.insert(straights.end(), patterns_[ROYAL_FLUSH].begin(),
+                   patterns_[ROYAL_FLUSH].end());
 
   if (straights.size() < 2) {
     return false;
   }
-  SetInUse(cards, false);
+  SetInUse(cards_, false);
   for (int l = 0; l < straights.size(); ++l) {
     SetInUse(straights[l], true);
     for (int m = 0; m < straights.size(); ++m) {
@@ -270,7 +270,7 @@ bool Hand::ThreeStraights() {
         natural.push_back(Pattern(unused_cards, STRAIGHT));
         natural.push_back(straights[m]);
         natural.push_back(straights[l]);
-        naturals.push_back(natural);
+        naturals_.push_back(natural);
         return true;
       }
 
@@ -282,7 +282,7 @@ bool Hand::ThreeStraights() {
 }
 
 void Hand::Search() {
-  SetInUse(cards, false);
+  SetInUse(cards_, false);
   for (int last = NUM_PATTERNS-1; last >= 0; --last) {
     for (int middle = last; middle >= 0; --middle) {
       for (int first = middle; first >= 0; --first) {
@@ -296,35 +296,35 @@ void Hand::Search() {
 }
 
 void Hand::GenerateCombos(int first, int middle, int last) {
-  for (int l = 0; l < patterns[last].size(); ++l) {
-    SetInUse(patterns[last][l], true);
+  for (int l = 0; l < patterns_[last].size(); ++l) {
+    SetInUse(patterns_[last][l], true);
 
-    for (int m = 0; m < patterns[middle].size(); ++m) {
-      if (IsInUse(patterns[middle][m]) ||
-          patterns[middle][m].Compare(patterns[last][l]) == 1) {
+    for (int m = 0; m < patterns_[middle].size(); ++m) {
+      if (IsInUse(patterns_[middle][m]) ||
+          patterns_[middle][m].Compare(patterns_[last][l]) == 1) {
         continue;
       }
-      SetInUse(patterns[middle][m], true);
+      SetInUse(patterns_[middle][m], true);
 
-      for (int f = 0; f < patterns[first].size(); ++f) {
-        if (IsInUse(patterns[first][f]) ||
-            patterns[first][f].Compare(patterns[middle][m]) == 1) {
+      for (int f = 0; f < patterns_[first].size(); ++f) {
+        if (IsInUse(patterns_[first][f]) ||
+            patterns_[first][f].Compare(patterns_[middle][m]) == 1) {
           continue;
         }
-        SetInUse(patterns[first][f], true);
-        AddCombo(patterns[first][f], patterns[middle][m], patterns[last][l]);
-        SetInUse(patterns[first][f], false);
+        SetInUse(patterns_[first][f], true);
+        AddCombo(patterns_[first][f], patterns_[middle][m], patterns_[last][l]);
+        SetInUse(patterns_[first][f], false);
       }
 
       if (first == JUNK) {
-        AddCombo(Pattern(), patterns[middle][m], patterns[last][l]);
+        AddCombo(Pattern(), patterns_[middle][m], patterns_[last][l]);
       }
-      SetInUse(patterns[middle][m], false);
+      SetInUse(patterns_[middle][m], false);
     }
     if (middle == JUNK) {
-      AddCombo(Pattern(), Pattern(), patterns[last][l]);
+      AddCombo(Pattern(), Pattern(), patterns_[last][l]);
     }
-    SetInUse(patterns[last][l], false);
+    SetInUse(patterns_[last][l], false);
   }
 }
 
@@ -353,12 +353,12 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
     SortFromLowToHigh(first);
   }
 
-  combos.push_back(Combo(first, middle, last));
+  combos_.push_back(Combo(first, middle, last));
 }
 
 Set Hand::GetUnusedCards() {
   Set unused_cards;
-  for (auto card : cards) {
+  for (auto card : cards_) {
     if (!card->in_use) {
       unused_cards.push_back(card);
     }
@@ -382,22 +382,22 @@ bool Hand::IsInUse(Set set) {
 }
 
 void Hand::SortBySuit() {
-  for (auto card : cards) {
-    suits[card->suit].push_back(card);
+  for (auto card : cards_) {
+    suits_[card->suit].push_back(card);
   }
-  for (auto& suit : suits) {
+  for (auto& suit : suits_) {
     SortFromLowToHigh(suit);
   }
 }
 
 void Hand::SortByRank() {
-  for (auto card : cards) {
-    ranks[card->rank].push_back(card);
+  for (auto card : cards_) {
+    ranks_[card->rank].push_back(card);
   }
 }
 
 void Hand::FindFlushes() {
-  for (auto suit : suits) {
+  for (auto suit : suits_) {
     if (suit.size() < 5) {
       continue;
     }
@@ -405,60 +405,60 @@ void Hand::FindFlushes() {
     for (auto flush : flushes) {
       SortFromLowToHigh(flush);
       if (IsRoyalFlush(flush)) {
-        patterns[ROYAL_FLUSH].push_back(flush);
+        patterns_[ROYAL_FLUSH].push_back(flush);
       } else if (IsStraight(flush)) {
         //patterns[STRAIGHT_FLUSH].push_back(flush);
       } else {
-        patterns[FLUSH].push_back(flush);
+        patterns_[FLUSH].push_back(flush);
       }
     }
   }
 }
 
 void Hand::FindMultiples() {
-  for (auto rank : ranks) {
+  for (auto rank : ranks_) {
     if (rank.size() == 2) {
-      patterns[PAIR].push_back(Pattern(rank, PAIR));
+      patterns_[PAIR].push_back(Pattern(rank, PAIR));
     } else if (rank.size() == 3) {
-      patterns[TRIPLE].push_back(Pattern(rank, TRIPLE));
+      patterns_[TRIPLE].push_back(Pattern(rank, TRIPLE));
     } else if (rank.size() == 4) {
-      patterns[FOUR_OF_A_KIND].push_back(Pattern(rank, FOUR_OF_A_KIND));
+      patterns_[FOUR_OF_A_KIND].push_back(Pattern(rank, FOUR_OF_A_KIND));
     }
   }
   if (SixPairs()) {
     return;
   }
   // Break triples into pairs.
-  for (auto triple : patterns[TRIPLE]) {
+  for (auto triple : patterns_[TRIPLE]) {
     for (auto pair : TripleToPairs(triple)) {
-      patterns[PAIR].push_back(pair);
+      patterns_[PAIR].push_back(pair);
     }
   }
 }
 
 void Hand::FindTwoPairs() {
-  const auto& pairs = patterns[PAIR];
+  const auto& pairs = patterns_[PAIR];
   for (int i = 0; i < pairs.size(); ++i) {
     for (int j = i+1; j < pairs.size(); ++j) {
       if (pairs[i].back()->rank < pairs[j].back()->rank) {
         Pattern two_pairs(Combine(pairs[i], pairs[j]), TWO_PAIRS);
-        patterns[TWO_PAIRS].push_back(two_pairs);
+        patterns_[TWO_PAIRS].push_back(two_pairs);
       } else if (pairs[i].back()->rank > pairs[j].back()->rank) {
         Pattern two_pairs(Combine(pairs[j], pairs[i]), TWO_PAIRS);
-        patterns[TWO_PAIRS].push_back(two_pairs);
+        patterns_[TWO_PAIRS].push_back(two_pairs);
       }
     }
   }
 }
 
 void Hand::FindFullHouses() {
-  const auto& pairs = patterns[PAIR];
-  const auto& triples = patterns[TRIPLE];
+  const auto& pairs = patterns_[PAIR];
+  const auto& triples = patterns_[TRIPLE];
   for (int i = 0; i < pairs.size(); ++i) {
     for (int j = 0; j < triples.size(); ++j) {
       if (pairs[i][0]->rank != triples[j][0]->rank) {
         Pattern full_house(Combine(pairs[i], triples[j]), FULL_HOUSE);
-        patterns[FULL_HOUSE].push_back(full_house);
+        patterns_[FULL_HOUSE].push_back(full_house);
       }
     }
   }
@@ -466,13 +466,13 @@ void Hand::FindFullHouses() {
 
 void Hand::FindStraights() {
   // Ace can be either the lowest or the highest.
-  for (auto card : ranks[ACE]) {
-    ranks[ONE].push_back(card);
+  for (auto card : ranks_[ACE]) {
+    ranks_[ONE].push_back(card);
   }
   for (int i = 0; i < NUM_RANKS-4; ++i) {
     bool is_straight = true;
     for (int j = i; j < i+5; ++j) {
-      if (ranks[j].empty()) {
+      if (ranks_[j].empty()) {
         is_straight = false;
         break;
       }
@@ -481,14 +481,14 @@ void Hand::FindStraights() {
     for (auto straight : straights) {
       if (IsFlush(straight)) {
         if (!IsRoyalFlush(straight)) {
-          patterns[STRAIGHT_FLUSH].push_back(straight);
+          patterns_[STRAIGHT_FLUSH].push_back(straight);
         }
       } else {
-        patterns[STRAIGHT].push_back(straight);
+        patterns_[STRAIGHT].push_back(straight);
       }
     }
   }
-  ranks[ONE].clear();
+  ranks_[ONE].clear();
 }
 
 vector<Pattern> Hand::TripleToPairs(Set triple) {
@@ -518,13 +518,13 @@ vector<Pattern> Hand::PickFlushes(Set suit) {
 
 vector<Pattern> Hand::PickStraights(int r) {
   vector<Pattern> straights;
-  for (int i = 0; i < ranks[r].size(); ++i) {
-    for (int j = 0; j < ranks[r+1].size(); ++j) {
-      for (int k = 0; k < ranks[r+2].size(); ++k) {
-        for (int l = 0; l < ranks[r+3].size(); ++l) {
-          for (int m = 0; m < ranks[r+4].size(); ++m) {
-            Set straight = { ranks[r][i], ranks[r+1][j], ranks[r+2][k],
-              ranks[r+3][l], ranks[r+4][m] };
+  for (int i = 0; i < ranks_[r].size(); ++i) {
+    for (int j = 0; j < ranks_[r+1].size(); ++j) {
+      for (int k = 0; k < ranks_[r+2].size(); ++k) {
+        for (int l = 0; l < ranks_[r+3].size(); ++l) {
+          for (int m = 0; m < ranks_[r+4].size(); ++m) {
+            Set straight = { ranks_[r][i], ranks_[r+1][j], ranks_[r+2][k],
+              ranks_[r+3][l], ranks_[r+4][m] };
             straights.push_back(Pattern(straight, STRAIGHT));
           }
         }

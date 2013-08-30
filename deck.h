@@ -11,8 +11,8 @@ class Deck {
   Card* DealOneCard();
 
  private:
-  Card cards[52];
-  int  top;
+  Card cards_[52];
+  int  top_;
 };
 
 #endif  // DECK_H_

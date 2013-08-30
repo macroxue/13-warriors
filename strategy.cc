@@ -12,9 +12,9 @@ Strategy::Strategy() {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < NUM_PATTERNS; ++j) {
       for (int r = 0; r < NUM_RANKS; ++r) {
-        stats[i][j][r].win_prob = init_win_prob[i][j];
-        stats[i][j][r].wins = 0;
-        stats[i][j][r].total = 0;
+        stats_[i][j][r].win_prob = init_win_prob[i][j];
+        stats_[i][j][r].wins = 0;
+        stats_[i][j][r].total = 0;
       }
     }
   }
@@ -55,24 +55,24 @@ void Strategy::Update(int nth, const Pattern& p1, const Pattern& p2, int result)
   int r1 = p1.back()->rank;
   int r2 = p2.back()->rank;
   if (result == 1) {
-    ++stats[nth][p1.pattern()][r1].wins;
+    ++stats_[nth][p1.pattern()][r1].wins;
   } else if (result == -1) {
-    ++stats[nth][p2.pattern()][r2].wins;
+    ++stats_[nth][p2.pattern()][r2].wins;
   }
-  ++stats[nth][p1.pattern()][r1].total;
-  ++stats[nth][p2.pattern()][r2].total;
+  ++stats_[nth][p1.pattern()][r1].total;
+  ++stats_[nth][p2.pattern()][r2].total;
 }
 
 double Strategy::GetWinningProbability(int nth, const Pattern& p) const {
   int high_rank = p.set().back()->rank;
-  return stats[nth][p.pattern()][high_rank].win_prob;
+  return stats_[nth][p.pattern()][high_rank].win_prob;
 }
 
 void Strategy::UpdateWinningProbabilities() {
   for (int r = 0; r < NUM_RANKS; ++r) {
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < NUM_PATTERNS; ++j) {
-        auto* stat = &stats[i][j][r];
+        auto* stat = &stats_[i][j][r];
         if (stat->total >= 10) {
           stat->win_prob = double(stat->wins)/stat->total;
         }
@@ -89,7 +89,7 @@ void Strategy::ShowWinningProbabilities() {
     printf("%11c\n", rank_symbols[r]);
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < NUM_PATTERNS; ++j) {
-        auto* stat = &stats[i][j][r];
+        auto* stat = &stats_[i][j][r];
         if (stat->total >= 10) {
           printf("%11.2f", stat->win_prob);
         } else {

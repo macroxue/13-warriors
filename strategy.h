@@ -19,7 +19,9 @@ class Strategy {
     double win_prob;
     int    wins;
     int    total;
-  } stats[3][NUM_PATTERNS][NUM_RANKS];
+  };
+
+  Stat stats_[3][NUM_PATTERNS][NUM_RANKS];
 };
 
 #endif  // STRATEGY_H_

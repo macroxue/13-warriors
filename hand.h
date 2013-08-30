@@ -67,14 +67,14 @@ class Hand {
   void SortFromHighToLow(Set& cards);
 
  private:
-  Deck deck;
-  Set cards;
-  Set suits[NUM_SUITS];
-  Set ranks[NUM_RANKS];
-  vector<Pattern> patterns[NUM_PATTERNS];
-  vector<Combo> combos;
-  vector<Combo> naturals;
-  Combo best;
+  Deck deck_;
+  Set cards_;
+  Set suits_[NUM_SUITS];
+  Set ranks_[NUM_RANKS];
+  vector<Pattern> patterns_[NUM_PATTERNS];
+  vector<Combo> combos_;
+  vector<Combo> naturals_;
+  Combo best_;
   int points_;
   Strategy* strategy_;
 };
