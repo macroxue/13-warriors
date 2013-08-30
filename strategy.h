@@ -7,7 +7,7 @@
 class Strategy {
  public:
   Strategy();
-  void Learn(int seed, int rounds, int update_cycle);
+  void Learn(int rounds, int update_cycle);
   void Update(int nth, const Pattern& p1, const Pattern& p2, int result);
 
   double GetWinningProbability(int nth, const Pattern& p) const;

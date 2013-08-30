@@ -34,8 +34,11 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  printf("SEED:\t\t%d\n", seed);
+  srand(seed);
+
   Strategy strategy;
-  strategy.Learn(seed, rounds, update_cycle);
+  strategy.Learn(rounds, update_cycle);
   strategy.ShowWinningProbabilities();
   if (input) {
     Deck deck;

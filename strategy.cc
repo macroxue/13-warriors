@@ -20,10 +20,7 @@ Strategy::Strategy() {
   }
 }
 
-void Strategy::Learn(int seed, int rounds, int update_cycle) {
-  printf("SEED:\t\t%d\n", seed);
-  srand(seed);
-
+void Strategy::Learn(int rounds, int update_cycle) {
   for (int r = 0; r < rounds; ++r) {
     for (int f = 0; f < update_cycle; ++f) {
       Deck deck;
