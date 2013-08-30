@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     Deck deck;
     Hand hand(input);
     hand.set_strategy(&strategy);
-    hand.ArrangeSets();
+    hand.Arrange();
     hand.Show();
   }
   return 0;

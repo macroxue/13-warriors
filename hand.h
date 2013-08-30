@@ -15,7 +15,7 @@ class Hand {
   void DealFrom(Deck* deck);
   void AddCard(Card* card);
 
-  void ArrangeSets();
+  void Arrange();
   void Evaluate(Combo& combo, bool is_natural);
 
   void Match(Hand& hand);
@@ -42,8 +42,6 @@ class Hand {
   void AddCombo(Pattern first, Pattern middle, Pattern last);
 
   Set GetUnusedCards();
-  void SetInUse(Set set, bool in_use);
-  bool IsInUse(Set set);
 
   void SortBySuit();
   void SortByRank();
@@ -56,15 +54,6 @@ class Hand {
   vector<Pattern> TripleToPairs(Set triple);
   vector<Pattern> PickFlushes(Set suit);
   vector<Pattern> PickStraights(int r);
-
-  Set Combine(Set set1, Set set2);
-
-  bool IsRoyalFlush(Set flush);
-  bool IsStraight(Set set);
-  bool IsFlush(Set set);
-
-  void SortFromLowToHigh(Set& cards);
-  void SortFromHighToLow(Set& cards);
 
  private:
   Deck deck_;

@@ -33,7 +33,7 @@ void Strategy::Learn(int seed, int rounds, int update_cycle) {
       for (int i = 0; i < 4; ++i) {
         hands[i].set_strategy(this);
         hands[i].DealFrom(&deck);
-        hands[i].ArrangeSets();
+        hands[i].Arrange();
       }
 
       for (int i = 0; i < 3; ++i) {

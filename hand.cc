@@ -48,7 +48,7 @@ void Hand::AddCard(Card* card) {
   card->in_use = true;
 }
 
-void Hand::ArrangeSets() {
+void Hand::Arrange() {
   if (cards_.size() != 13) {
     fprintf(stderr, "Wrong number of cards: %ld\n", cards_.size());
     exit(-1);
@@ -159,7 +159,7 @@ void Hand::Show() {
 
 void Hand::ShowHand() {
   printf("FULL HAND:\t");
-  // SortFromLowToHigh by suit.
+  // Sort by suit.
   for (auto suit : suits_) {
     for (auto card : suit) {
       card->Show();
@@ -169,7 +169,7 @@ void Hand::ShowHand() {
     }
   }
   printf("\n\t\t");
-  // SortFromLowToHigh by rank.
+  // Sort by rank.
   for (auto rank : ranks_) {
     for (auto card : rank) {
       card->Show();
@@ -254,18 +254,18 @@ bool Hand::ThreeStraights() {
   if (straights.size() < 2) {
     return false;
   }
-  SetInUse(cards_, false);
+  cards_.SetInUse(false);
   for (int l = 0; l < straights.size(); ++l) {
-    SetInUse(straights[l], true);
+    straights[l].SetInUse(true);
     for (int m = 0; m < straights.size(); ++m) {
-      if (IsInUse(straights[m]) || straights[m].Compare(straights[l]) == 1) {
+      if (straights[m].IsInUse() || straights[m].Compare(straights[l]) == 1) {
         continue;
       }
-      SetInUse(straights[m], true);
+      straights[m].SetInUse(true);
 
       Set unused_cards = GetUnusedCards();
-      SortFromLowToHigh(unused_cards);
-      if (IsStraight(unused_cards)) {
+      unused_cards.SortFromLowToHigh();
+      if (unused_cards.IsStraight()) {
         Combo natural;
         natural.push_back(Pattern(unused_cards, STRAIGHT));
         natural.push_back(straights[m]);
@@ -274,15 +274,15 @@ bool Hand::ThreeStraights() {
         return true;
       }
 
-      SetInUse(straights[m], false);
+      straights[m].SetInUse(false);
     }
-    SetInUse(straights[l], false);
+    straights[l].SetInUse(false);
   }
   return false;
 }
 
 void Hand::Search() {
-  SetInUse(cards_, false);
+  cards_.SetInUse(false);
   for (int last = NUM_PATTERNS-1; last >= 0; --last) {
     for (int middle = last; middle >= 0; --middle) {
       for (int first = middle; first >= 0; --first) {
@@ -297,40 +297,40 @@ void Hand::Search() {
 
 void Hand::GenerateCombos(int first, int middle, int last) {
   for (int l = 0; l < patterns_[last].size(); ++l) {
-    SetInUse(patterns_[last][l], true);
+    patterns_[last][l].SetInUse(true);
 
     for (int m = 0; m < patterns_[middle].size(); ++m) {
-      if (IsInUse(patterns_[middle][m]) ||
+      if (patterns_[middle][m].IsInUse() ||
           patterns_[middle][m].Compare(patterns_[last][l]) == 1) {
         continue;
       }
-      SetInUse(patterns_[middle][m], true);
+      patterns_[middle][m].SetInUse(true);
 
       for (int f = 0; f < patterns_[first].size(); ++f) {
-        if (IsInUse(patterns_[first][f]) ||
+        if (patterns_[first][f].IsInUse() ||
             patterns_[first][f].Compare(patterns_[middle][m]) == 1) {
           continue;
         }
-        SetInUse(patterns_[first][f], true);
+        patterns_[first][f].SetInUse(true);
         AddCombo(patterns_[first][f], patterns_[middle][m], patterns_[last][l]);
-        SetInUse(patterns_[first][f], false);
+        patterns_[first][f].SetInUse(false);
       }
 
       if (first == JUNK) {
         AddCombo(Pattern(), patterns_[middle][m], patterns_[last][l]);
       }
-      SetInUse(patterns_[middle][m], false);
+      patterns_[middle][m].SetInUse(false);
     }
     if (middle == JUNK) {
       AddCombo(Pattern(), Pattern(), patterns_[last][l]);
     }
-    SetInUse(patterns_[last][l], false);
+    patterns_[last][l].SetInUse(false);
   }
 }
 
 void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
   Set unused_cards = GetUnusedCards();
-  SortFromHighToLow(unused_cards);
+  unused_cards.SortFromHighToLow();
   int next = 0;
 
   // Special case when the first and the middle are junks.
@@ -350,7 +350,7 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
 
   // Special case when the first and the middle are junks.
   if (first.pattern() == JUNK && middle.pattern() == JUNK) {
-    SortFromLowToHigh(first);
+    first.SortFromLowToHigh();
   }
 
   combos_.push_back(Combo(first, middle, last));
@@ -366,27 +366,12 @@ Set Hand::GetUnusedCards() {
   return unused_cards;
 }
 
-void Hand::SetInUse(Set set, bool in_use) {
-  for (auto card : set) {
-    card->in_use = in_use;
-  }
-}
-
-bool Hand::IsInUse(Set set) {
-  for (auto card : set) {
-    if (card->in_use) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void Hand::SortBySuit() {
   for (auto card : cards_) {
     suits_[card->suit].push_back(card);
   }
   for (auto& suit : suits_) {
-    SortFromLowToHigh(suit);
+    suit.SortFromLowToHigh();
   }
 }
 
@@ -403,11 +388,13 @@ void Hand::FindFlushes() {
     }
     auto flushes = PickFlushes(suit);
     for (auto flush : flushes) {
-      SortFromLowToHigh(flush);
-      if (IsRoyalFlush(flush)) {
-        patterns_[ROYAL_FLUSH].push_back(flush);
-      } else if (IsStraight(flush)) {
-        //patterns[STRAIGHT_FLUSH].push_back(flush);
+      flush.SortFromLowToHigh();
+      if (flush.IsStraight()) {
+        if (flush.IsRoyalFlush()) {
+          patterns_[ROYAL_FLUSH].push_back(flush);
+        } else {
+          patterns_[STRAIGHT_FLUSH].push_back(flush);
+        }
       } else {
         patterns_[FLUSH].push_back(flush);
       }
@@ -441,10 +428,10 @@ void Hand::FindTwoPairs() {
   for (int i = 0; i < pairs.size(); ++i) {
     for (int j = i+1; j < pairs.size(); ++j) {
       if (pairs[i].back()->rank < pairs[j].back()->rank) {
-        Pattern two_pairs(Combine(pairs[i], pairs[j]), TWO_PAIRS);
+        Pattern two_pairs(pairs[i] + pairs[j], TWO_PAIRS);
         patterns_[TWO_PAIRS].push_back(two_pairs);
       } else if (pairs[i].back()->rank > pairs[j].back()->rank) {
-        Pattern two_pairs(Combine(pairs[j], pairs[i]), TWO_PAIRS);
+        Pattern two_pairs(pairs[j] + pairs[i], TWO_PAIRS);
         patterns_[TWO_PAIRS].push_back(two_pairs);
       }
     }
@@ -457,7 +444,7 @@ void Hand::FindFullHouses() {
   for (int i = 0; i < pairs.size(); ++i) {
     for (int j = 0; j < triples.size(); ++j) {
       if (pairs[i][0]->rank != triples[j][0]->rank) {
-        Pattern full_house(Combine(pairs[i], triples[j]), FULL_HOUSE);
+        Pattern full_house(pairs[i] + triples[j], FULL_HOUSE);
         patterns_[FULL_HOUSE].push_back(full_house);
       }
     }
@@ -479,11 +466,7 @@ void Hand::FindStraights() {
     }
     auto straights = PickStraights(i);
     for (auto straight : straights) {
-      if (IsFlush(straight)) {
-        if (!IsRoyalFlush(straight)) {
-          patterns_[STRAIGHT_FLUSH].push_back(straight);
-        }
-      } else {
+      if (!straight.IsFlush()) {
         patterns_[STRAIGHT].push_back(straight);
       }
     }
@@ -532,64 +515,5 @@ vector<Pattern> Hand::PickStraights(int r) {
     }
   }
   return straights;
-}
-
-Set Hand::Combine(Set set1, Set set2) {
-  Set set;
-  set.insert(set.end(), set1.begin(), set1.end());
-  set.insert(set.end(), set2.begin(), set2.end());
-  return set;
-}
-
-bool Hand::IsRoyalFlush(Set flush) {
-  return flush.front()->rank == TEN && flush.back()->rank == ACE;
-}
-
-bool Hand::IsStraight(Set set) {
-  int num_cards = set.size();
-  for (int i = 0; i < num_cards-1; ++i) {
-    if (set[i]->rank + 1 != set[i+1]->rank) {
-      return false;
-    }
-  }
-  // The case of A2345 but sorted as 2345A.
-  return set[num_cards-2]->rank + 1 == set[num_cards-1]->rank ||
-    (set[0]->rank == TWO && set[num_cards-1]->rank == ACE);
-}
-
-bool Hand::IsFlush(Set set) {
-  int suit = set[0]->suit;
-  for (auto card : set) {
-    if (card->suit != suit) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void Hand::SortFromLowToHigh(Set& cards) {
-  if (cards.empty()) {
-    return;
-  }
-  for (int i = 0; i < cards.size()-1; ++i) {
-    for (int j = i+1; j < cards.size(); ++j) {
-      if (cards[i]->rank > cards[j]->rank) {
-        swap(cards[i], cards[j]);
-      }
-    }
-  }
-}
-
-void Hand::SortFromHighToLow(Set& cards) {
-  if (cards.empty()) {
-    return;
-  }
-  for (int i = 0; i < cards.size()-1; ++i) {
-    for (int j = i+1; j < cards.size(); ++j) {
-      if (cards[i]->rank < cards[j]->rank) {
-        swap(cards[i], cards[j]);
-      }
-    }
-  }
 }
 
