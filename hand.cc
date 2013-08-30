@@ -228,28 +228,16 @@ bool Hand::ThreeSuits() {
 bool Hand::SixPairs() {
   if (patterns_[PAIR].size() + patterns_[TRIPLE].size()
       + patterns_[FOUR_OF_A_KIND].size()*2 == 6) {
-    Combo natural;
-    for (auto pattern : patterns_[PAIR]) {
-      natural.push_back(pattern);
-    }
-    for (auto pattern : patterns_[TRIPLE]) {
-      natural.push_back(pattern);
-    }
-    for (auto pattern : patterns_[FOUR_OF_A_KIND]) {
-      natural.push_back(pattern);
-    }
-    naturals_.push_back(natural);
+    naturals_.push_back(patterns_[PAIR] + patterns_[TRIPLE]
+                        + patterns_[FOUR_OF_A_KIND]);
     return true;
   }
   return false;
 }
 
 bool Hand::ThreeStraights() {
-  vector<Pattern> straights = patterns_[STRAIGHT];
-  straights.insert(straights.end(), patterns_[STRAIGHT_FLUSH].begin(),
-                   patterns_[STRAIGHT_FLUSH].end());
-  straights.insert(straights.end(), patterns_[ROYAL_FLUSH].begin(),
-                   patterns_[ROYAL_FLUSH].end());
+  Combo straights = patterns_[STRAIGHT] + patterns_[STRAIGHT_FLUSH]
+    + patterns_[ROYAL_FLUSH];
 
   if (straights.size() < 2) {
     return false;
@@ -453,16 +441,14 @@ void Hand::FindStraights() {
   ranks_[ONE].clear();
 }
 
-vector<Pattern> Hand::TripleToPairs(Set triple) {
-  vector<Pattern> pairs;
-  pairs.push_back(Pattern(Set{triple[0], triple[1]}, PAIR));
-  pairs.push_back(Pattern(Set{triple[0], triple[2]}, PAIR));
-  pairs.push_back(Pattern(Set{triple[1], triple[2]}, PAIR));
-  return pairs;
+Combo Hand::TripleToPairs(Set triple) {
+  return { Pattern({triple[0], triple[1]}, PAIR),
+           Pattern({triple[0], triple[2]}, PAIR),
+           Pattern({triple[1], triple[2]}, PAIR) };
 }
 
-vector<Pattern> Hand::PickFlushes(Set suit) {
-  vector<Pattern> flushes;
+Combo Hand::PickFlushes(Set suit) {
+  Combo flushes;
   for (int i = 0; i < suit.size()-4; ++i) {
     for (int j = i+1; j < suit.size()-3; ++j) {
       for (int k = j+1; k < suit.size()-2; ++k) {
@@ -478,8 +464,8 @@ vector<Pattern> Hand::PickFlushes(Set suit) {
   return flushes;
 }
 
-vector<Pattern> Hand::PickStraights(int r) {
-  vector<Pattern> straights;
+Combo Hand::PickStraights(int r) {
+  Combo straights;
   for (auto c : ranks_[r]) {
     for (auto c1 : ranks_[r+1]) {
       for (auto c2 : ranks_[r+2]) {

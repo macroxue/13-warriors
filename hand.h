@@ -47,16 +47,16 @@ class Hand {
   void FindFullHouses();
   void FindStraights();
 
-  vector<Pattern> TripleToPairs(Set triple);
-  vector<Pattern> PickFlushes(Set suit);
-  vector<Pattern> PickStraights(int r);
+  Combo TripleToPairs(Set triple);
+  Combo PickFlushes(Set suit);
+  Combo PickStraights(int r);
 
  private:
   Deck deck_;
   Set cards_;
   Set suits_[NUM_SUITS];
   Set ranks_[NUM_RANKS];
-  vector<Pattern> patterns_[NUM_PATTERNS];
+  Combo patterns_[NUM_PATTERNS];
   vector<Combo> combos_;
   vector<Combo> naturals_;
   Combo best_;

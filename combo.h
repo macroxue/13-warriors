@@ -11,6 +11,8 @@ class Combo : public vector<Pattern> {
 
   void Show() const;
 
+  Combo operator + (const Combo& c);
+
   double score() const { return score_; }
   bool is_natural() const { return is_natural_; }
 
