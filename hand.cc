@@ -283,45 +283,42 @@ void Hand::Search() {
   for (int last = NUM_PATTERNS-1; last >= 0; --last) {
     for (int middle = last; middle >= 0; --middle) {
       for (int first = middle; first >= 0; --first) {
-        if (first != JUNK && first != PAIR && first != TRIPLE) {
-          continue;
+        if (first == JUNK || first == PAIR || first == TRIPLE) {
+          GenerateCombos(first, middle, last);
         }
-        GenerateCombos(first, middle, last);
       }
     }
   }
 }
 
 void Hand::GenerateCombos(int first, int middle, int last) {
-  for (int l = 0; l < patterns_[last].size(); ++l) {
-    patterns_[last][l].SetInUse(true);
+  for (auto p3 : patterns_[last]) {
+    p3.SetInUse(true);
 
-    for (int m = 0; m < patterns_[middle].size(); ++m) {
-      if (patterns_[middle][m].IsInUse() ||
-          patterns_[middle][m].Compare(patterns_[last][l]) == 1) {
+    for (auto p2 : patterns_[middle]) {
+      if (p2.IsInUse() || p2.Compare(p3) == 1) {
         continue;
       }
-      patterns_[middle][m].SetInUse(true);
+      p2.SetInUse(true);
 
-      for (int f = 0; f < patterns_[first].size(); ++f) {
-        if (patterns_[first][f].IsInUse() ||
-            patterns_[first][f].Compare(patterns_[middle][m]) == 1) {
+      for (auto p1 : patterns_[first]) {
+        if (p1.IsInUse() || p1.Compare(p2) == 1) {
           continue;
         }
-        patterns_[first][f].SetInUse(true);
-        AddCombo(patterns_[first][f], patterns_[middle][m], patterns_[last][l]);
-        patterns_[first][f].SetInUse(false);
+        p1.SetInUse(true);
+        AddCombo(p1, p2, p3);
+        p1.SetInUse(false);
       }
 
       if (first == JUNK) {
-        AddCombo(Pattern(), patterns_[middle][m], patterns_[last][l]);
+        AddCombo(Pattern(), p2, p3);
       }
-      patterns_[middle][m].SetInUse(false);
+      p2.SetInUse(false);
     }
     if (middle == JUNK) {
-      AddCombo(Pattern(), Pattern(), patterns_[last][l]);
+      AddCombo(Pattern(), Pattern(), p3);
     }
-    patterns_[last][l].SetInUse(false);
+    p3.SetInUse(false);
   }
 }
 
@@ -421,28 +418,20 @@ void Hand::FindMultiples() {
 }
 
 void Hand::FindTwoPairs() {
-  const auto& pairs = patterns_[PAIR];
-  for (int i = 0; i < pairs.size(); ++i) {
-    for (int j = i+1; j < pairs.size(); ++j) {
-      if (pairs[i].back()->rank < pairs[j].back()->rank) {
-        Pattern two_pairs(pairs[i] + pairs[j], TWO_PAIRS);
-        patterns_[TWO_PAIRS].push_back(two_pairs);
-      } else if (pairs[i].back()->rank > pairs[j].back()->rank) {
-        Pattern two_pairs(pairs[j] + pairs[i], TWO_PAIRS);
-        patterns_[TWO_PAIRS].push_back(two_pairs);
+  for (auto pair1 : patterns_[PAIR]) {
+    for (auto pair2 : patterns_[PAIR]) {
+      if (pair1[0]->rank < pair2[0]->rank) {
+        patterns_[TWO_PAIRS].push_back(Pattern(pair1 + pair2, TWO_PAIRS));
       }
     }
   }
 }
 
 void Hand::FindFullHouses() {
-  const auto& pairs = patterns_[PAIR];
-  const auto& triples = patterns_[TRIPLE];
-  for (int i = 0; i < pairs.size(); ++i) {
-    for (int j = 0; j < triples.size(); ++j) {
-      if (pairs[i][0]->rank != triples[j][0]->rank) {
-        Pattern full_house(pairs[i] + triples[j], FULL_HOUSE);
-        patterns_[FULL_HOUSE].push_back(full_house);
+  for (auto pair : patterns_[PAIR]) {
+    for (auto triple : patterns_[TRIPLE]) {
+      if (pair[0]->rank != triple[0]->rank) {
+        patterns_[FULL_HOUSE].push_back(Pattern(pair + triple, FULL_HOUSE));
       }
     }
   }
@@ -454,13 +443,6 @@ void Hand::FindStraights() {
     ranks_[ONE].push_back(card);
   }
   for (int i = 0; i < NUM_RANKS-4; ++i) {
-    bool is_straight = true;
-    for (int j = i; j < i+5; ++j) {
-      if (ranks_[j].empty()) {
-        is_straight = false;
-        break;
-      }
-    }
     auto straights = PickStraights(i);
     for (auto straight : straights) {
       if (!straight.IsFlush()) {
@@ -498,13 +480,12 @@ vector<Pattern> Hand::PickFlushes(Set suit) {
 
 vector<Pattern> Hand::PickStraights(int r) {
   vector<Pattern> straights;
-  for (int i = 0; i < ranks_[r].size(); ++i) {
-    for (int j = 0; j < ranks_[r+1].size(); ++j) {
-      for (int k = 0; k < ranks_[r+2].size(); ++k) {
-        for (int l = 0; l < ranks_[r+3].size(); ++l) {
-          for (int m = 0; m < ranks_[r+4].size(); ++m) {
-            Set straight = { ranks_[r][i], ranks_[r+1][j], ranks_[r+2][k],
-              ranks_[r+3][l], ranks_[r+4][m] };
+  for (auto c : ranks_[r]) {
+    for (auto c1 : ranks_[r+1]) {
+      for (auto c2 : ranks_[r+2]) {
+        for (auto c3 : ranks_[r+3]) {
+          for (auto c4 : ranks_[r+4]) {
+            Set straight = { c, c1, c2, c3, c4 };
             straights.push_back(Pattern(straight, STRAIGHT));
           }
         }
