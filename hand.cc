@@ -312,18 +312,16 @@ void Hand::GenerateCombos(int first, int middle, int last) {
           continue;
         }
         SetInUse(patterns[first][f], true);
-        if (!Waste()) {
-          AddCombo(patterns[first][f], patterns[middle][m], patterns[last][l]);
-        }
+        AddCombo(patterns[first][f], patterns[middle][m], patterns[last][l]);
         SetInUse(patterns[first][f], false);
       }
 
-      if (first == JUNK && !Waste()) {
+      if (first == JUNK) {
         AddCombo(Pattern(), patterns[middle][m], patterns[last][l]);
       }
       SetInUse(patterns[middle][m], false);
     }
-    if (middle == JUNK && !Waste()) {
+    if (middle == JUNK) {
       AddCombo(Pattern(), Pattern(), patterns[last][l]);
     }
     SetInUse(patterns[last][l], false);
@@ -380,27 +378,6 @@ bool Hand::IsInUse(Set set) {
       return true;
     }
   }
-  return false;
-}
-
-bool Hand::Waste() {
-#if 0
-  // TODO: Problem breaking aa bb cc dd 23456.
-  for (auto pattern : patterns) {
-    for (auto set : pattern) {
-      bool in_use = false;
-      for (auto card : set) {
-        if (card->in_use) {
-          in_use = true;
-          break;
-        }
-      }
-      if (!in_use) {
-        return true;
-      }
-    }
-  }
-#endif
   return false;
 }
 

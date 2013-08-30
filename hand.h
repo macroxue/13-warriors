@@ -44,7 +44,6 @@ class Hand {
   Set GetUnusedCards();
   void SetInUse(Set set, bool in_use);
   bool IsInUse(Set set);
-  bool Waste();
 
   void SortBySuit();
   void SortByRank();
