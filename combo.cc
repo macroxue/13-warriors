@@ -4,11 +4,8 @@ Combo::Combo()
   : score_(0), is_natural_(false) {
 }
 
-Combo::Combo(Pattern first, Pattern middle, Pattern last)
-  : score_(0), is_natural_(false) {
-  push_back(first);
-  push_back(middle);
-  push_back(last);
+Combo::Combo(std::initializer_list<Pattern> patterns)
+  : vector<Pattern>(patterns), score_(0), is_natural_(false) {
 }
 
 void Combo::Show() const {

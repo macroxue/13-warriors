@@ -255,28 +255,25 @@ bool Hand::ThreeStraights() {
     return false;
   }
   cards_.SetInUse(false);
-  for (int l = 0; l < straights.size(); ++l) {
-    straights[l].SetInUse(true);
-    for (int m = 0; m < straights.size(); ++m) {
-      if (straights[m].IsInUse() || straights[m].Compare(straights[l]) == 1) {
+  for (int m = 0; m < straights.size()-1; ++m) {
+    straights[m].SetInUse(true);
+    for (int l = m+1; l < straights.size(); ++l) {
+      if (straights[l].IsInUse()) {
         continue;
       }
-      straights[m].SetInUse(true);
+      straights[l].SetInUse(true);
 
       Set unused_cards = GetUnusedCards();
       unused_cards.SortFromLowToHigh();
       if (unused_cards.IsStraight()) {
-        Combo natural;
-        natural.push_back(Pattern(unused_cards, STRAIGHT));
-        natural.push_back(straights[m]);
-        natural.push_back(straights[l]);
-        naturals_.push_back(natural);
+        naturals_.push_back(Combo{Pattern(unused_cards, STRAIGHT),
+                            straights[m], straights[l]});
         return true;
       }
 
-      straights[m].SetInUse(false);
+      straights[l].SetInUse(false);
     }
-    straights[l].SetInUse(false);
+    straights[m].SetInUse(false);
   }
   return false;
 }
@@ -353,7 +350,7 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
     first.SortFromLowToHigh();
   }
 
-  combos_.push_back(Combo(first, middle, last));
+  combos_.push_back(Combo({first, middle, last}));
 }
 
 Set Hand::GetUnusedCards() {
@@ -391,9 +388,9 @@ void Hand::FindFlushes() {
       flush.SortFromLowToHigh();
       if (flush.IsStraight()) {
         if (flush.IsRoyalFlush()) {
-          patterns_[ROYAL_FLUSH].push_back(flush);
+          patterns_[ROYAL_FLUSH].push_back(Pattern(flush, ROYAL_FLUSH));
         } else {
-          patterns_[STRAIGHT_FLUSH].push_back(flush);
+          patterns_[STRAIGHT_FLUSH].push_back(Pattern(flush, STRAIGHT_FLUSH));
         }
       } else {
         patterns_[FLUSH].push_back(flush);

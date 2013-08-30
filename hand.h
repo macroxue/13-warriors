@@ -13,25 +13,21 @@ class Hand {
   Hand(const char* arg);
 
   void DealFrom(Deck* deck);
-  void AddCard(Card* card);
-
   void Arrange();
-  void Evaluate(Combo& combo, bool is_natural);
-
-  void Match(Hand& hand);
-  void AddPoints(int points);
-
-  void FindPatterns();
   void Show();
+  void Match(Hand& hand);
 
   void set_strategy(Strategy *strategy) { strategy_ = strategy; }
 
  private:
+  void AddCard(Card* card);
+  void Evaluate(Combo& combo, bool is_natural);
+  void AddPoints(int points);
+  void FindPatterns();
+
   void ShowHand();
   void ShowPatterns();
-  void ShowSet(Set set, int p);
   void ShowCombos(const vector<Combo>& combos, const char* type);
-  void ShowCombo(const Combo& combo);
 
   bool ThreeSuits();
   bool SixPairs();

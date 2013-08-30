@@ -57,14 +57,14 @@ bool Set::IsFlush() {
 bool Set::IsStraight() {
   assert(SortedFromLowToHigh());
   int num_cards = size();
-  for (int i = 0; i < num_cards-1; ++i) {
+  for (int i = 0; i < num_cards-2; ++i) {
     if ((*this)[i]->rank + 1 != (*this)[i+1]->rank) {
       return false;
     }
   }
   // The case of A2345 but sorted as 2345A.
-  return (*this)[num_cards-2]->rank + 1 == (*this)[num_cards-1]->rank ||
-    ((*this)[0]->rank == TWO && (*this)[num_cards-1]->rank == ACE);
+  return (*this)[num_cards-2]->rank + 1 == back()->rank ||
+    (front()->rank == TWO && back()->rank == ACE);
 }
 
 bool Set::IsRoyalFlush() {

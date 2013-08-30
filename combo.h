@@ -7,7 +7,7 @@
 class Combo : public vector<Pattern> {
  public:
   Combo();
-  Combo(Pattern first, Pattern middle, Pattern last);
+  Combo(std::initializer_list<Pattern> patterns);
 
   void Show() const;
 
