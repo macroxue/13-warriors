@@ -13,16 +13,14 @@ class Hand {
   Hand(const char* arg);
 
   void DealFrom(Deck* deck);
-  void Arrange();
+  void Arrange(const Strategy& strategy);
   void Show();
-  void Match(Hand& hand);
 
-  void set_strategy(Strategy *strategy) { strategy_ = strategy; }
+  Combo best() { return best_; }
 
  private:
   void AddCard(Card* card);
-  void Evaluate(Combo& combo, bool is_natural);
-  void AddPoints(int points);
+  void Evaluate(const Strategy& strategy, Combo& combo);
   void FindPatterns();
 
   void ShowHand();
@@ -60,8 +58,6 @@ class Hand {
   vector<Combo> combos_;
   vector<Combo> naturals_;
   Combo best_;
-  int points_;
-  Strategy* strategy_;
 };
 
 #endif  // HAND_H_

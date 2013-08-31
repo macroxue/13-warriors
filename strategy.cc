@@ -20,44 +20,12 @@ Strategy::Strategy() {
   }
 }
 
-void Strategy::Learn(int rounds, int update_cycle) {
-  for (int r = 0; r < rounds; ++r) {
-    for (int f = 0; f < update_cycle; ++f) {
-      Deck deck;
-      deck.Shuffle();
-
-      Hand hands[4];
-      for (int i = 0; i < 4; ++i) {
-        hands[i].set_strategy(this);
-        hands[i].DealFrom(&deck);
-        hands[i].Arrange();
-      }
-
-      for (int i = 0; i < 3; ++i) {
-        for (int j = i+1; j < 4; j++) {
-          hands[i].Match(hands[j]);
-        }
-      }
-#if 0
-      for (int i = 0; i < 4; ++i) {
-        hands[i].Show();
-      }
-#endif
-    }
-    UpdateWinningProbabilities();
-  }
-}
-
-void Strategy::Update(int nth, const Pattern& p1, const Pattern& p2, int result) {
-  int r1 = p1.back()->rank;
-  int r2 = p2.back()->rank;
+void Strategy::Update(int nth, const Pattern& p, int result) {
+  int r = p.back()->rank;
   if (result == 1) {
-    ++stats_[nth][p1.pattern()][r1].wins;
-  } else if (result == -1) {
-    ++stats_[nth][p2.pattern()][r2].wins;
+    ++stats_[nth][p.pattern()][r].wins;
   }
-  ++stats_[nth][p1.pattern()][r1].total;
-  ++stats_[nth][p2.pattern()][r2].total;
+  ++stats_[nth][p.pattern()][r].total;
 }
 
 double Strategy::GetWinningProbability(int nth, const Pattern& p) const {

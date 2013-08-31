@@ -4,8 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "hand.h"
-#include "strategy.h"
+#include "player.h"
 
 #if 0
   JUNK       PAIR  TWO_PAIRS     TRIPLE   STRAIGHT      FLUSH FULL_HOUSE FOUR_OF_A_KIND STRAIGHT_FLUSH ROYAL_FLUSH
@@ -21,13 +20,11 @@
 
 int main(int argc, char* argv[]) {
   char *input = NULL;
-  int rounds = 30;
-  int update_cycle = 30;
+  int rounds = 1000;
   int seed = time(NULL);
   int c;
-  while ((c = getopt(argc, argv, "c:i:r:s:")) != -1) {
+  while ((c = getopt(argc, argv, "i:r:s:")) != -1) {
     switch (c) {
-      case 'c': update_cycle = atoi(optarg); break;
       case 'i': input = optarg; break;
       case 'r': rounds = atoi(optarg); break;
       case 's': seed = atoi(optarg); break;
@@ -37,15 +34,39 @@ int main(int argc, char* argv[]) {
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
 
-  Strategy strategy;
-  strategy.Learn(rounds, update_cycle);
-  strategy.ShowWinningProbabilities();
-  if (input) {
+  Strategy strategies[4];
+  Player players[4] = { Player(0), Player(1), Player(2), Player(3) };
+  for (int i = 0; i < 4; ++i) {
+    players[i].set_strategy(&strategies[i]);
+  }
+
+  for (int r = 0; r < rounds; ++r) {
     Deck deck;
-    Hand hand(input);
-    hand.set_strategy(&strategy);
-    hand.Arrange();
-    hand.Show();
+    deck.Shuffle();
+    for (auto &player : players) {
+      player.NewHand(&deck);
+    }
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = i+1; j < 4; ++j) {
+        players[i].Match(&players[j]);
+      }
+    }
+    if (!input && r % 100 == 0) {
+      for (int i = 0; i < 4; ++i) {
+        printf("Player %d: %d\n", i+1, players[i].points());
+        players[i].hand()->best().Show();
+      }
+    }
+  }
+  if (input) {
+    Player& me = players[0];
+    me.NewHand(input);
+    me.hand()->Show();
+  } else {
+    for (int i = 0; i < 4; ++i) {
+      strategies[i].ShowWinningProbabilities();
+    }
   }
   return 0;
 }

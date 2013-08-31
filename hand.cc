@@ -8,11 +8,10 @@
 #include "score.h"
 #include "strategy.h"
 
-Hand::Hand()
-  : points_(0), strategy_(NULL) {}
+Hand::Hand() {
+}
 
-Hand::Hand(const char* arg)
-  : points_(0), strategy_(NULL) {
+Hand::Hand(const char* arg) {
   int suit = -1;
   for (; *arg; ++arg) {
     int c = toupper(*arg);
@@ -48,7 +47,7 @@ void Hand::AddCard(Card* card) {
   card->in_use = true;
 }
 
-void Hand::Arrange() {
+void Hand::Arrange(const Strategy& strategy) {
   if (cards_.size() != 13) {
     fprintf(stderr, "Wrong number of cards: %ld\n", cards_.size());
     exit(-1);
@@ -73,70 +72,32 @@ void Hand::Arrange() {
   }
 
   for (auto& natural : naturals_) {
-    Evaluate(natural, true);
+    natural.set_is_natural(true);
+    Evaluate(strategy, natural);
     if (best_.empty() || natural.score() > best_.score()) {
       best_ = natural;
     }
   }
   for (auto& combo : combos_) {
-    Evaluate(combo, false);
+    combo.set_is_natural(false);
+    Evaluate(strategy, combo);
     if (best_.empty() || combo.score() > best_.score()) {
       best_ = combo;
     }
   }
 }
 
-void Hand::Evaluate(Combo& combo, bool is_natural) {
-  combo.set_is_natural(is_natural);
-  if (is_natural) {
+void Hand::Evaluate(const Strategy& strategy, Combo& combo) {
+  if (combo.is_natural()) {
     combo.set_score(natural_points);
   } else {
     double score = 0;
     for (int i = 0; i < 3; i++) {
-      double win_prob = strategy_->GetWinningProbability(i, combo[i]);
+      double win_prob = strategy.GetWinningProbability(i, combo[i]);
       score += (2*win_prob - 1) * bonus[i][combo[i].pattern()];
     }
     combo.set_score(score);
   }
-}
-
-void Hand::Match(Hand& hand) {
-  int points = 0;
-  if (best_.is_natural()) {
-    if (!hand.best_.is_natural()) {
-      points = sweep_points;
-    } else {
-      // Tie.
-    }
-  } else {
-    if (hand.best_.is_natural()) {
-      points = -sweep_points;
-    } else {
-      // Match sets one by one.
-      int win_count = 0;
-      for (int i = 0; i < 3; i++) {
-        auto& p1 = best_[i];
-        auto& p2 = hand.best_[i];
-        int result = p1.Compare(p2);
-        win_count += result;
-        if (result == 1) {
-          points += bonus[i][p1.pattern()];
-        } else if (result == -1) {
-          points -= bonus[i][p2.pattern()];
-        }
-        strategy_->Update(i, p1, p2, result);
-      }
-      if (win_count == 3 || win_count == -3) {
-        points *= 2;
-      }
-    }
-  }
-  AddPoints(points);
-  hand.AddPoints(-points);
-}
-
-void Hand::AddPoints(int points) {
-  points_ += points;
 }
 
 void Hand::FindPatterns() {
