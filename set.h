@@ -14,14 +14,15 @@ class Set : public vector<Card*> {
   void SortFromLowToHigh();
   void SortFromHighToLow();
 
-  bool SortedFromLowToHigh();
+  bool SortedFromLowToHigh() const;
+  bool SortedFromHighToLow() const;
 
-  bool IsFlush();
-  bool IsStraight();
-  bool IsRoyalFlush();
+  bool IsFlush() const;
+  bool IsStraight() const;
+  bool IsRoyalFlush() const;
 
   void SetInUse(bool in_use);
-  bool IsInUse();
+  bool IsInUse() const;
 };
 
 Set operator + (const Set& set1, const Set& set2);

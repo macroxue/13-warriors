@@ -21,9 +21,9 @@ class Pattern : public Set {
  public:
   Pattern();
   Pattern(const Set& set, int pattern);
-  void Show();
+  void Show() const;
 
-  int Compare(const Pattern& p);
+  int Compare(const Pattern& p) const;
 
   Set set() const { return *this; }
   int pattern() const { return pattern_; }

@@ -8,7 +8,7 @@ Combo::Combo(std::initializer_list<Pattern> patterns)
   : vector<Pattern>(patterns), score_(0), is_natural_(false) {
 }
 
-Combo Combo::operator + (const Combo& c) {
+Combo Combo::operator + (const Combo& c) const {
   Combo combo(*this);
   combo.insert(combo.end(), c.begin(), c.end());
   return combo;

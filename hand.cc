@@ -28,12 +28,14 @@ Hand::Hand(const char* arg) {
       AddCard(deck_.FindCard(suit, rank));
     }
   }
+  cards_.SortFromLowToHigh();
 }
 
 void Hand::DealFrom(Deck* deck) {
   for (int i = 0; i < 13; ++i) {
     cards_.push_back(deck->DealOneCard());
   }
+  cards_.SortFromLowToHigh();
 }
 
 void Hand::AddCard(Card* card) {
@@ -109,7 +111,7 @@ void Hand::FindPatterns() {
   FindStraights();
 }
 
-void Hand::Show() {
+void Hand::Show() const {
   ShowHand();
   best_.Show();
   ShowCombos(naturals_, "NATURAL");
@@ -118,11 +120,11 @@ void Hand::Show() {
   // printf("POINTS: %d\n", points_);
 }
 
-void Hand::ShowHand() {
+void Hand::ShowHand() const {
   printf("FULL HAND:\t");
   // Sort by suit.
-  for (auto suit : suits_) {
-    for (auto card : suit) {
+  for (const auto& suit : suits_) {
+    for (const auto& card : suit) {
       card->Show();
     }
     if (suit.size()) {
@@ -131,8 +133,8 @@ void Hand::ShowHand() {
   }
   printf("\n\t\t");
   // Sort by rank.
-  for (auto rank : ranks_) {
-    for (auto card : rank) {
+  for (const auto& rank : ranks_) {
+    for (const auto& card : rank) {
       card->Show();
     }
     if (rank.size()) {
@@ -142,14 +144,14 @@ void Hand::ShowHand() {
   printf("\n");
 }
 
-void Hand::ShowPatterns() {
+void Hand::ShowPatterns() const {
   for (int i = 0; i < NUM_PATTERNS; ++i) {
     if (patterns_[i].size()) {
       printf("%s:\t", pattern_names[i]);
       if (strlen(pattern_names[i]) < 8) {
         printf("\t");
       }
-      for (auto pattern : patterns_[i]) {
+      for (const auto& pattern : patterns_[i]) {
         pattern.Show();
       }
       printf("\n");
@@ -157,7 +159,7 @@ void Hand::ShowPatterns() {
   }
 }
 
-void Hand::ShowCombos(const vector<Combo>& combos, const char* type) {
+void Hand::ShowCombos(const vector<Combo>& combos, const char* type) const {
   if (!combos.empty()) {
     printf("%s:", type);
   }
@@ -168,7 +170,7 @@ void Hand::ShowCombos(const vector<Combo>& combos, const char* type) {
 
 bool Hand::ThreeSuits() {
   bool three_suits = true;
-  for (auto suit : suits_) {
+  for (const auto& suit : suits_) {
     if (suit.size() != 0 && suit.size() != 3 && suit.size() != 5) {
       three_suits = false;
       break;
@@ -176,7 +178,7 @@ bool Hand::ThreeSuits() {
   }
   if (three_suits) {
     Combo natural;
-    for (auto suit : suits_) {
+    for (const auto& suit : suits_) {
       if (!suit.empty()) {
         natural.push_back(Pattern(suit, FLUSH));
       }
@@ -241,16 +243,16 @@ void Hand::Search() {
 }
 
 void Hand::GenerateCombos(int first, int middle, int last) {
-  for (auto p3 : patterns_[last]) {
+  for (auto& p3 : patterns_[last]) {
     p3.SetInUse(true);
 
-    for (auto p2 : patterns_[middle]) {
+    for (auto& p2 : patterns_[middle]) {
       if (p2.IsInUse() || p2.Compare(p3) == 1) {
         continue;
       }
       p2.SetInUse(true);
 
-      for (auto p1 : patterns_[first]) {
+      for (auto& p1 : patterns_[first]) {
         if (p1.IsInUse() || p1.Compare(p2) == 1) {
           continue;
         }
@@ -273,7 +275,6 @@ void Hand::GenerateCombos(int first, int middle, int last) {
 
 void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
   Set unused_cards = GetUnusedCards();
-  unused_cards.SortFromHighToLow();
   int next = 0;
 
   // Special case when the first and the middle are junks.
@@ -299,39 +300,40 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
   combos_.push_back(Combo({first, middle, last}));
 }
 
-Set Hand::GetUnusedCards() {
+Set Hand::GetUnusedCards() const {
   Set unused_cards;
-  for (auto card : cards_) {
-    if (!card->in_use) {
-      unused_cards.push_back(card);
+  for (int i = cards_.size()-1; i >= 0; --i) {
+    if (!cards_[i]->in_use) {
+      unused_cards.push_back(cards_[i]);
     }
   }
+  assert(unused_cards.SortedFromHighToLow());
   return unused_cards;
 }
 
 void Hand::SortBySuit() {
-  for (auto card : cards_) {
+  for (const auto& card : cards_) {
     suits_[card->suit].push_back(card);
   }
-  for (auto& suit : suits_) {
-    suit.SortFromLowToHigh();
+  for (const auto& suit : suits_) {
+    assert(suit.SortedFromLowToHigh());
   }
 }
 
 void Hand::SortByRank() {
-  for (auto card : cards_) {
+  for (const auto& card : cards_) {
     ranks_[card->rank].push_back(card);
   }
 }
 
 void Hand::FindFlushes() {
-  for (auto suit : suits_) {
+  for (const auto& suit : suits_) {
     if (suit.size() < 5) {
       continue;
     }
     auto flushes = PickFlushes(suit);
-    for (auto flush : flushes) {
-      flush.SortFromLowToHigh();
+    for (const auto& flush : flushes) {
+      assert(flush.SortedFromLowToHigh());
       if (flush.IsStraight()) {
         if (flush.IsRoyalFlush()) {
           patterns_[ROYAL_FLUSH].push_back(Pattern(flush, ROYAL_FLUSH));
@@ -346,7 +348,7 @@ void Hand::FindFlushes() {
 }
 
 void Hand::FindMultiples() {
-  for (auto rank : ranks_) {
+  for (const auto& rank : ranks_) {
     if (rank.size() == 2) {
       patterns_[PAIR].push_back(Pattern(rank, PAIR));
     } else if (rank.size() == 3) {
@@ -359,16 +361,16 @@ void Hand::FindMultiples() {
     return;
   }
   // Break triples into pairs.
-  for (auto triple : patterns_[TRIPLE]) {
-    for (auto pair : TripleToPairs(triple)) {
+  for (const auto& triple : patterns_[TRIPLE]) {
+    for (const auto& pair : TripleToPairs(triple)) {
       patterns_[PAIR].push_back(pair);
     }
   }
 }
 
 void Hand::FindTwoPairs() {
-  for (auto pair1 : patterns_[PAIR]) {
-    for (auto pair2 : patterns_[PAIR]) {
+  for (const auto& pair1 : patterns_[PAIR]) {
+    for (const auto& pair2 : patterns_[PAIR]) {
       if (pair1[0]->rank < pair2[0]->rank) {
         patterns_[TWO_PAIRS].push_back(Pattern(pair1 + pair2, TWO_PAIRS));
       }
@@ -377,8 +379,8 @@ void Hand::FindTwoPairs() {
 }
 
 void Hand::FindFullHouses() {
-  for (auto pair : patterns_[PAIR]) {
-    for (auto triple : patterns_[TRIPLE]) {
+  for (const auto& pair : patterns_[PAIR]) {
+    for (const auto& triple : patterns_[TRIPLE]) {
       if (pair[0]->rank != triple[0]->rank) {
         patterns_[FULL_HOUSE].push_back(Pattern(pair + triple, FULL_HOUSE));
       }
@@ -388,12 +390,12 @@ void Hand::FindFullHouses() {
 
 void Hand::FindStraights() {
   // Ace can be either the lowest or the highest.
-  for (auto card : ranks_[ACE]) {
+  for (const auto& card : ranks_[ACE]) {
     ranks_[ONE].push_back(card);
   }
   for (int i = 0; i < NUM_RANKS-4; ++i) {
     auto straights = PickStraights(i);
-    for (auto straight : straights) {
+    for (const auto straight : straights) {
       if (!straight.IsFlush()) {
         patterns_[STRAIGHT].push_back(straight);
       }
@@ -402,13 +404,13 @@ void Hand::FindStraights() {
   ranks_[ONE].clear();
 }
 
-Combo Hand::TripleToPairs(Set triple) {
+Combo Hand::TripleToPairs(const Set& triple) const {
   return { Pattern({triple[0], triple[1]}, PAIR),
            Pattern({triple[0], triple[2]}, PAIR),
            Pattern({triple[1], triple[2]}, PAIR) };
 }
 
-Combo Hand::PickFlushes(Set suit) {
+Combo Hand::PickFlushes(const Set& suit) const {
   Combo flushes;
   for (int i = 0; i < suit.size()-4; ++i) {
     for (int j = i+1; j < suit.size()-3; ++j) {
@@ -425,7 +427,7 @@ Combo Hand::PickFlushes(Set suit) {
   return flushes;
 }
 
-Combo Hand::PickStraights(int r) {
+Combo Hand::PickStraights(int r) const {
   Combo straights;
   for (auto c : ranks_[r]) {
     for (auto c1 : ranks_[r+1]) {

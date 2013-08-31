@@ -11,7 +11,7 @@ class Strategy {
 
   double GetWinningProbability(int nth, const Pattern& p) const;
   void UpdateWinningProbabilities();
-  void ShowWinningProbabilities();
+  void ShowWinningProbabilities() const;
 
  private:
   struct Stat {

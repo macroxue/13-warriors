@@ -3,6 +3,7 @@
 #include "set.h"
 
 Set::Set() {
+  reserve(8);
 }
 
 Set::Set(std::initializer_list<Card*> cards)
@@ -35,7 +36,7 @@ void Set::SortFromHighToLow() {
   }
 }
 
-bool Set::SortedFromLowToHigh() {
+bool Set::SortedFromLowToHigh() const {
   for (int i = 1; i < size(); ++i) {
     if ((*this)[i-1]->rank > (*this)[i]->rank) {
       return false;
@@ -44,7 +45,16 @@ bool Set::SortedFromLowToHigh() {
   return true;
 }
 
-bool Set::IsFlush() {
+bool Set::SortedFromHighToLow() const {
+  for (int i = 1; i < size(); ++i) {
+    if ((*this)[i-1]->rank < (*this)[i]->rank) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Set::IsFlush() const {
   int suit = (*this)[0]->suit;
   for (auto card : *this) {
     if (card->suit != suit) {
@@ -54,7 +64,7 @@ bool Set::IsFlush() {
   return true;
 }
 
-bool Set::IsStraight() {
+bool Set::IsStraight() const {
   assert(SortedFromLowToHigh());
   int num_cards = size();
   for (int i = 0; i < num_cards-2; ++i) {
@@ -67,7 +77,7 @@ bool Set::IsStraight() {
     (front()->rank == TWO && back()->rank == ACE);
 }
 
-bool Set::IsRoyalFlush() {
+bool Set::IsRoyalFlush() const {
   return IsFlush() && IsStraight() && front()->rank == TEN && back()->rank == ACE;
 }
 
@@ -77,7 +87,7 @@ void Set::SetInUse(bool in_use) {
   }
 }
 
-bool Set::IsInUse() {
+bool Set::IsInUse() const {
   for (auto card : *this) {
     if (card->in_use) {
       return true;

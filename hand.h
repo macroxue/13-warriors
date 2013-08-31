@@ -14,18 +14,18 @@ class Hand {
 
   void DealFrom(Deck* deck);
   void Arrange(const Strategy& strategy);
-  void Show();
+  void Show() const;
 
-  Combo best() { return best_; }
+  Combo best() const { return best_; }
 
  private:
   void AddCard(Card* card);
   void Evaluate(const Strategy& strategy, Combo& combo);
   void FindPatterns();
 
-  void ShowHand();
-  void ShowPatterns();
-  void ShowCombos(const vector<Combo>& combos, const char* type);
+  void ShowHand() const;
+  void ShowPatterns() const;
+  void ShowCombos(const vector<Combo>& combos, const char* type) const;
 
   bool ThreeSuits();
   bool SixPairs();
@@ -35,7 +35,7 @@ class Hand {
   void GenerateCombos(int first, int middle, int last);
   void AddCombo(Pattern first, Pattern middle, Pattern last);
 
-  Set GetUnusedCards();
+  Set GetUnusedCards() const;
 
   void SortBySuit();
   void SortByRank();
@@ -45,9 +45,9 @@ class Hand {
   void FindFullHouses();
   void FindStraights();
 
-  Combo TripleToPairs(Set triple);
-  Combo PickFlushes(Set suit);
-  Combo PickStraights(int r);
+  Combo TripleToPairs(const Set& triple) const;
+  Combo PickFlushes(const Set& suit) const;
+  Combo PickStraights(int r) const;
 
  private:
   Deck deck_;

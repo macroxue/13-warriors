@@ -18,7 +18,7 @@ struct Card {
   int  rank;
   bool in_use;
 
-  void Show(FILE *fp = stdout) {
+  void Show(FILE *fp = stdout) const {
     fprintf(fp, "%c%c ", suit_symbols[suit], rank_symbols[rank]);
   }
 };

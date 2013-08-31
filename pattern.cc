@@ -10,7 +10,7 @@ Pattern::Pattern(const Set& set, int pattern)
   : Set(set), pattern_(pattern) {
 }
 
-void Pattern::Show() {
+void Pattern::Show() const {
   int i = 0;
   for (auto card : *this) {
     if (size() > pattern_sizes[pattern_] && i == 0) {
@@ -26,7 +26,7 @@ void Pattern::Show() {
   printf(", ");
 }
 
-int Pattern::Compare(const Pattern& p) {
+int Pattern::Compare(const Pattern& p) const {
   if (pattern() < p.pattern())
     return -1;
   else if (pattern() > p.pattern())

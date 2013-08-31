@@ -46,7 +46,7 @@ void Strategy::UpdateWinningProbabilities() {
   }
 }
 
-void Strategy::ShowWinningProbabilities() {
+void Strategy::ShowWinningProbabilities() const {
   for (int r = 0; r < NUM_RANKS; ++r) {
     for (int j = 0; j < NUM_PATTERNS; ++j) {
       printf("%11s", pattern_names[j]);
