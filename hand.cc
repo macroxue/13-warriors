@@ -12,20 +12,18 @@ Hand::Hand() {
 }
 
 Hand::Hand(const char* arg) {
-  int suit = -1;
+  int suit = SPADE;
   for (; *arg; ++arg) {
     int c = toupper(*arg);
-    char* s = strchr(const_cast<char*>(suit_symbols), c);
     char* r = strchr(const_cast<char*>(rank_symbols), c);
-    if (s) {
-      suit = s - suit_symbols;
-    } else if (r) {
-      if (suit == -1) {
-        fprintf(stderr, "Missing suit symbol\n");
-        exit(-1);
-      }
+    if (r) {
       int rank = r - rank_symbols;
       AddCard(deck_.FindCard(suit, rank));
+    } else if (c == ',') {
+      suit = suit + 1;
+    } else {
+      fprintf(stderr, "Invalid symbol: %c\n", c);
+      exit(-1);
     }
   }
   cards_.SortFromLowToHigh();
