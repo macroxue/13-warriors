@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
         players[i].Match(&players[j]);
       }
     }
-    if (!input && r % 100 == 0) {
+    if (!input && r % 1000 == 0) {
       for (int i = 0; i < 4; ++i) {
         printf("Player %d: %d\n", i+1, players[i].points());
         players[i].hand()->best().Show();

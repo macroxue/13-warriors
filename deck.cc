@@ -26,7 +26,7 @@ Card* Deck::FindCard(int suit, int rank) {
 void Deck::Shuffle() {
   top_ = 0;
   for (int i = 0; i < 52; ++i) {
-    std::swap(cards_[i], cards_[rand() % 52]);
+    std::swap(cards_[i], cards_[rand() % (52-i) + i]);
   }
 }
 
