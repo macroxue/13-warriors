@@ -91,12 +91,20 @@ void Hand::Evaluate(const Strategy& strategy, Combo& combo) {
   if (combo.is_natural()) {
     combo.set_score(natural_points);
   } else {
-    double score = 0;
-    for (int i = 0; i < 3; i++) {
-      double win_prob = strategy.GetWinningProbability(i, combo[i]);
-      score += (2*win_prob - 1) * bonus[i][combo[i].pattern()];
-    }
-    combo.set_score(score);
+    double w0 = strategy.GetWinningProbability(0, combo[0]);
+    double w1 = strategy.GetWinningProbability(1, combo[1]);
+    double w2 = strategy.GetWinningProbability(2, combo[2]);
+    double b0 = bonus[0][combo[0].pattern()];
+    double b1 = bonus[1][combo[1].pattern()];
+    double b2 = bonus[2][combo[2].pattern()];
+    combo.set_score(w0*w1*w2*(b0+b1+b2)*2 +
+                    w0*w1*(1-w2)*(+b0+b1-b2) +
+                    w0*(1-w1)*w2*(+b0-b1+b2) +
+                    (1-w0)*w1*w2*(-b0+b1+b2) +
+                    w0*(1-w1)*(1-w2)*(+b0-b1-b2) +
+                    (1-w0)*w1*(1-w2)*(-b0+b1-b2) +
+                    (1-w0)*(1-w1)*w2*(-b0-b1+b2) +
+                    (1-w0)*(1-w1)*(1-w2)*(-b0-b1-b2)*2);
   }
 }
 
