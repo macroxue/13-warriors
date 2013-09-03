@@ -47,18 +47,22 @@ void Strategy::UpdateWinningProbabilities() {
 }
 
 void Strategy::ShowWinningProbabilities() const {
-  for (int r = 0; r < NUM_RANKS; ++r) {
-    for (int j = 0; j < NUM_PATTERNS; ++j) {
-      printf("%11s", pattern_names[j]);
+  const int name_width = 14;
+  const int data_width = 5;
+  for (int p = 0; p < NUM_PATTERNS; ++p) {
+    printf("%*s:", name_width, pattern_names[p]);
+    for (int r = 1; r < NUM_RANKS; ++r) {
+      printf("%*c", data_width, rank_symbols[r]);
     }
-    printf("%11c\n", rank_symbols[r]);
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < NUM_PATTERNS; ++j) {
-        auto* stat = &stats_[i][j][r];
+    printf("\n");
+    for (int s = 0; s < 3; ++s) {
+      printf("%*d:", name_width, s+1);
+      for (int r = 1; r < NUM_RANKS; ++r) {
+        auto* stat = &stats_[s][p][r];
         if (stat->total >= 10) {
-          printf("%11.2f", stat->win_prob);
+          printf("%*.0f%%", data_width-1, stat->win_prob*100);
         } else {
-          printf("%11c", '-');
+          printf("%*c", data_width, '-');
         }
       }
       printf("\n");
