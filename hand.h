@@ -27,7 +27,7 @@ class Hand {
   void ShowPatterns() const;
   void ShowCombos(const vector<Combo>& combos, const char* type) const;
 
-  bool ThreeSuits();
+  bool ThreeFlushes();
   bool SixPairs();
   bool ThreeStraights();
 

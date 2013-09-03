@@ -54,7 +54,7 @@ void Hand::Arrange(const Strategy& strategy) {
   }
   SortBySuit();
   SortByRank();
-  if (ThreeSuits()) {
+  if (ThreeFlushes()) {
     // TODO: Bonus like royal flush should be kept.
     //return;
   }
@@ -174,24 +174,25 @@ void Hand::ShowCombos(const vector<Combo>& combos, const char* type) const {
   }
 }
 
-bool Hand::ThreeSuits() {
-  bool three_suits = true;
+bool Hand::ThreeFlushes() {
   for (const auto& suit : suits_) {
-    if (suit.size() != 0 && suit.size() != 3 && suit.size() != 5) {
-      three_suits = false;
-      break;
+    if (suit.size() != 0 && suit.size() != 3 && suit.size() != 5 &&
+        suit.size() != 8 && suit.size() != 10) {
+      return false;
     }
   }
-  if (three_suits) {
-    Combo natural;
-    for (const auto& suit : suits_) {
-      if (!suit.empty()) {
-        natural.push_back(Pattern(suit, FLUSH));
-      }
+  Combo natural;
+  for (const auto& suit : suits_) {
+    if (suit.size() > 5) {
+      Set::const_iterator mid = suit.begin() + suit.size()-5;
+      natural.push_back(Pattern(Set(suit.begin(), mid), FLUSH));
+      natural.push_back(Pattern(Set(mid, suit.end()), FLUSH));
+    } else if (!suit.empty()) {
+      natural.push_back(Pattern(suit, FLUSH));
     }
-    naturals_.push_back(natural);
   }
-  return three_suits;
+  naturals_.push_back(natural);
+  return true;
 }
 
 bool Hand::SixPairs() {

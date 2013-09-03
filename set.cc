@@ -10,6 +10,10 @@ Set::Set(std::initializer_list<Card*> cards)
   : vector<Card*>(cards) {
 }
 
+Set::Set(Set::const_iterator begin, Set::const_iterator end)
+  : vector<Card*>(begin, end) {
+}
+
 void Set::SortFromLowToHigh() {
   if (empty()) {
     return;
