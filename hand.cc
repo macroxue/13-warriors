@@ -236,12 +236,35 @@ bool Hand::ThreeStraights() {
 }
 
 void Hand::Search() {
+  vector<Combo> worthies;
   cards_.SetInUse(false);
   for (int last = NUM_PATTERNS-1; last >= 0; --last) {
     for (int middle = last; middle >= 0; --middle) {
       for (int first = middle; first >= 0; --first) {
         if (first == JUNK || first == PAIR || first == TRIPLE) {
+          bool worthy = true;
+          for (const auto& combo : worthies) {
+            int more = (first > combo[0].pattern()) +
+              (middle > combo[1].pattern()) +
+              (last > combo[2].pattern());
+            int less = (first < combo[0].pattern()) +
+              (middle < combo[1].pattern()) +
+              (last < combo[2].pattern());
+            if (more == 0 && less > 1) {
+              worthy = false;
+              break;
+            }
+          }
+          if (!worthy) {
+            continue;
+          }
+
+          int old_num_combos = combos_.size();
           GenerateCombos(first, middle, last);
+          int new_num_combos = combos_.size();
+          if (new_num_combos > old_num_combos) {
+            worthies.push_back(combos_.back());
+          }
         }
       }
     }
