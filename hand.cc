@@ -21,8 +21,10 @@ Hand::Hand(const char* arg) {
       AddCard(deck_.FindCard(suit, rank));
     } else if (c == ',') {
       suit = suit + 1;
+    } else if (isspace(c)) {
+      // Skip whitespace.
     } else {
-      fprintf(stderr, "Invalid symbol: %c\n", c);
+      fprintf(stderr, "Invalid symbol: %c\n", *arg);
       exit(-1);
     }
   }
@@ -45,6 +47,85 @@ void Hand::AddCard(Card* card) {
   }
   cards_.push_back(card);
   card->in_use = true;
+}
+
+void Hand::ReadArrangement() {
+  ShowHand();
+
+  for (;;) {
+    // Read the input line.
+    printf("Your arrangement: ");
+    char line[80];
+    while (!fgets(line, sizeof(line), stdin));
+
+    Combo combo;
+    Set set;
+    int suit = -1;
+    bool has_error = false;
+    cards_.SetInUse(false);
+
+    for (char* arg = line; *arg && !has_error; ++arg) {
+      int c = toupper(*arg);
+      char* s = strchr(const_cast<char*>(suit_symbols), c);
+      char* r = strchr(const_cast<char*>(rank_symbols), c);
+      if (s) {
+        suit = s - suit_symbols;
+      } else if (r) {
+        if (suit == -1) {
+          fprintf(stderr, "Missing suit symbol\n");
+          has_error = true;
+        }
+        int rank = r - rank_symbols;
+        auto card = FindCard(suit, rank);
+        if (card) {
+          if (card->in_use) {
+            fprintf(stderr, "Card used more than once: %c%c\n",
+                    suit_symbols[suit], rank_symbols[rank]);
+            has_error = true;
+          } else {
+            card->in_use = true;
+            set.push_back(card);
+          }
+        } else {
+          fprintf(stderr, "You don't have this card: %c%c\n",
+                  suit_symbols[suit], rank_symbols[rank]);
+          has_error = true;
+        }
+      } else if (c == ',') {
+        combo.push_back(Pattern(set));
+        set.clear();
+        suit = -1;
+      } else if (isspace(c)) {
+        // Skip whitespace.
+      } else {
+        fprintf(stderr, "Invalid symbol: %c\n", *arg);
+        has_error = true;
+      }
+    }
+    if (has_error) {
+      continue;
+    }
+    if (!set.empty()) {
+      combo.push_back(Pattern(set));
+    }
+    auto error = combo.CheckArrangement();
+    if (error) {
+      combo.Show();
+      fprintf(stderr, "Invalid arrangement: %s\n", error);
+      continue;
+    }
+    best_ = combo;
+    break;
+  }
+}
+
+Card* Hand::FindCard(int suit, int rank) {
+  for (auto card : cards_) {
+    if (card->suit == suit && card->rank == rank) {
+      return card;
+    }
+  }
+  return NULL;
 }
 
 void Hand::Arrange(const Strategy& strategy) {
@@ -223,7 +304,7 @@ bool Hand::ThreeStraights() {
 
       Set unused_cards = GetUnusedCards();
       unused_cards.SortFromLowToHigh();
-      if (unused_cards.IsStraight()) {
+      if (unused_cards.IsStraight(true)) {
         naturals_.push_back(Combo{Pattern(unused_cards, STRAIGHT),
                             straights[m], straights[l]});
         return true;

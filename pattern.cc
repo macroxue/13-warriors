@@ -6,6 +6,50 @@ Pattern::Pattern()
   : pattern_(JUNK) {
 }
 
+Pattern::Pattern(const Set& set)
+  : Set(set) {
+  SortFromLowToHigh();
+
+  if (IsRoyalFlush()) {
+    pattern_ = ROYAL_FLUSH;
+  } else if (IsStraightFlush()) {
+    pattern_ = STRAIGHT_FLUSH;
+  } else if (IsFlush()) {
+    pattern_ = FLUSH;
+  } else if (IsStraight()) {
+    pattern_ = STRAIGHT;
+  } else {
+    Set ranks[NUM_RANKS];
+    for (const auto& card : *this) {
+      ranks[card->rank].push_back(card);
+    }
+    pattern_ = JUNK;
+    for (int r = NUM_RANKS-1; r >= TWO && pattern_ == JUNK; --r) {
+      if (ranks[r].size() == 4) {
+        *this = Pattern(ranks[r], FOUR_OF_A_KIND);
+      } else if (ranks[r].size() == 3) {
+        *this = Pattern(ranks[r], TRIPLE);
+      }
+    }
+    for (int r = NUM_RANKS-1; r >= TWO && pattern_ <= TRIPLE; --r) {
+      if (ranks[r].size() == 2) {
+        if (pattern_ == TRIPLE) {
+          *this = Pattern(ranks[r] + this->set(), FULL_HOUSE);
+        } else if (pattern_ == PAIR) {
+          *this = Pattern(ranks[r] + this->set(), TWO_PAIRS);
+        } else if (pattern_ == JUNK) {
+          *this = Pattern(ranks[r], PAIR);
+        }
+      }
+    }
+    for (int r = NUM_RANKS-1; r >= TWO && size() < set.size(); --r) {
+      if (ranks[r].size() == 1) {
+        *this = Pattern(ranks[r] + this->set(), pattern_);
+      }
+    }
+  }
+}
+
 Pattern::Pattern(const Set& set, int pattern)
   : Set(set), pattern_(pattern) {
 }
@@ -32,12 +76,13 @@ int Pattern::Compare(const Pattern& p) const {
   else if (pattern() > p.pattern())
     return 1;
 
-  assert(size() == p.size());
+  int s1 = size() - 1;
+  int s2 = p.size() - 1;
 
-  for (int i = size()-1; i >= 0; --i) {
-    if ((*this)[i]->rank < p[i]->rank) {
+  for (int i = s1, j = s2; i >= 0 && j >= 0; --i, --j) {
+    if (at(i)->rank < p[j]->rank) {
       return -1;
-    } else if ((*this)[i]->rank > p[i]->rank) {
+    } else if (at(i)->rank > p[j]->rank) {
       return 1;
     }
   }

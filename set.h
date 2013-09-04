@@ -18,8 +18,11 @@ class Set : public vector<Card*> {
   bool SortedFromLowToHigh() const;
   bool SortedFromHighToLow() const;
 
-  bool IsFlush() const;
-  bool IsStraight() const;
+  vector<int> Runs() const;
+
+  bool IsStraight(bool three_cards = false) const;
+  bool IsFlush(bool three_cards = false) const;
+  bool IsStraightFlush() const;
   bool IsRoyalFlush() const;
 
   void SetInUse(bool in_use);

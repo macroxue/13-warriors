@@ -1,26 +1,36 @@
 #include "player.h"
 #include "score.h"
 
-Player::Player(int id)
-  : id_(id), strategy_(NULL), points_(0), num_hands_(0), hand_(NULL) {
+Player::Player(int id, bool is_computer)
+  : id_(id), is_computer_(is_computer), points_(0), num_hands_(0), hand_(NULL),
+    strategy_(NULL) {
 }
 
 void Player::NewHand(Deck* deck) {
   delete hand_;
   hand_ = new Hand;
   hand_->DealFrom(deck);
-  hand_->Arrange(*strategy_);
 
-  ++num_hands_;
-  if (num_hands_ % (100 * (id_+1)) == 0) {
-    strategy_->UpdateWinningProbabilities();
+  Arrange();
+  if (is_computer_) {
+    ++num_hands_;
+    if (num_hands_ % (100 * (id_+1)) == 0) {
+      strategy_->UpdateWinningProbabilities();
+    }
   }
 }
 
 void Player::NewHand(const char* input) {
   delete hand_;
   hand_ = new Hand(input);
+  Arrange();
+}
+
+void Player::Arrange() {
   hand_->Arrange(*strategy_);
+  if (!is_computer()) {
+    hand_->ReadArrangement();
+  }
 }
 
 void Player::Match(Player* other) {
@@ -47,8 +57,12 @@ void Player::Match(Player* other) {
       } else if (result == -1) {
         match_points -= bonus[i][c2[i].pattern()];
       }
-      this->strategy_->Update(i, c1[i], result);
-      other->strategy_->Update(i, c2[i], -result);
+      if (this->is_computer_) {
+        this->strategy_->Update(i, c1[i], result);
+      }
+      if (other->is_computer_) {
+        other->strategy_->Update(i, c2[i], -result);
+      }
     }
     if (win_count == 3 || win_count == -3) {
       match_points *= 2;

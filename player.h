@@ -6,22 +6,28 @@
 
 class Player {
  public:
-  Player(int number);
+  Player(int id, bool is_computer = true);
+
   void NewHand(Deck* deck);
   void NewHand(const char* input);
   void Match(Player* other);
 
+  int id() const { return id_; }
+  bool is_computer() const { return is_computer_; }
   int points() const { return points_; }
   Hand* hand() { return hand_; }
 
-  void set_strategy(Strategy *strategy) { strategy_ =  strategy; }
+  void set_strategy(Strategy *strategy) { strategy_ = strategy; }
 
  private:
+  void Arrange();
+
   int   id_;
-  Strategy* strategy_;
+  bool  is_computer_;
   int   points_;
   int   num_hands_;
   Hand* hand_;
+  Strategy* strategy_;
 };
 
 #endif  // PLAYER_H_

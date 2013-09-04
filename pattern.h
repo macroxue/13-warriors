@@ -20,6 +20,7 @@ static const int pattern_sizes[NUM_PATTERNS] = {
 class Pattern : public Set {
  public:
   Pattern();
+  Pattern(const Set& set);
   Pattern(const Set& set, int pattern);
   void Show() const;
 

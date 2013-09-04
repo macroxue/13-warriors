@@ -9,6 +9,8 @@ class Combo : public vector<Pattern> {
   Combo();
   Combo(std::initializer_list<Pattern> patterns);
 
+  const char* CheckArrangement() const;
+
   void Show() const;
 
   Combo operator + (const Combo& c) const;

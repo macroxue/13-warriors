@@ -20,12 +20,14 @@
 
 int main(int argc, char* argv[]) {
   char *input = NULL;
+  bool play = false;
   int rounds = 1000;
   int seed = time(NULL);
   int c;
-  while ((c = getopt(argc, argv, "i:r:s:")) != -1) {
+  while ((c = getopt(argc, argv, "i:pr:s:")) != -1) {
     switch (c) {
       case 'i': input = optarg; break;
+      case 'p': play = true; break;
       case 'r': rounds = atoi(optarg); break;
       case 's': seed = atoi(optarg); break;
     }
@@ -35,7 +37,7 @@ int main(int argc, char* argv[]) {
   srand(seed);
 
   Strategy strategies[4];
-  Player players[4] = { Player(0), Player(1), Player(2), Player(3) };
+  Player players[4] = { Player(0, !play), Player(1), Player(2), Player(3) };
   for (int i = 0; i < 4; ++i) {
     players[i].set_strategy(&strategies[i]);
   }
@@ -52,9 +54,11 @@ int main(int argc, char* argv[]) {
         players[i].Match(&players[j]);
       }
     }
-    if (!input && r % 1000 == 0) {
+    if ((!input && r % 1000 == 0) || play) {
       for (int i = 0; i < 4; ++i) {
-        printf("Player %d: %d\n", i+1, players[i].points());
+        printf("%8s %d: %+4d\t",
+               (players[i].is_computer() ? "Computer" : "Human"),
+               i+1, players[i].points());
         players[i].hand()->best().Show();
       }
     }

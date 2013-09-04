@@ -1,5 +1,7 @@
 #include <assert.h>
 
+#include <algorithm>
+
 #include "set.h"
 
 Set::Set() {
@@ -20,8 +22,8 @@ void Set::SortFromLowToHigh() {
   }
   for (int i = 0; i < size()-1; ++i) {
     for (int j = i+1; j < size(); ++j) {
-      if ((*this)[i]->rank > (*this)[j]->rank) {
-        std::swap((*this)[i], (*this)[j]);
+      if (at(i)->rank > at(j)->rank) {
+        std::swap(at(i), at(j));
       }
     }
   }
@@ -33,8 +35,8 @@ void Set::SortFromHighToLow() {
   }
   for (int i = 0; i < size()-1; ++i) {
     for (int j = i+1; j < size(); ++j) {
-      if ((*this)[i]->rank < (*this)[j]->rank) {
-        std::swap((*this)[i], (*this)[j]);
+      if (at(i)->rank < at(j)->rank) {
+        std::swap(at(i), at(j));
       }
     }
   }
@@ -42,7 +44,7 @@ void Set::SortFromHighToLow() {
 
 bool Set::SortedFromLowToHigh() const {
   for (int i = 1; i < size(); ++i) {
-    if ((*this)[i-1]->rank > (*this)[i]->rank) {
+    if (at(i-1)->rank > at(i)->rank) {
       return false;
     }
   }
@@ -51,15 +53,33 @@ bool Set::SortedFromLowToHigh() const {
 
 bool Set::SortedFromHighToLow() const {
   for (int i = 1; i < size(); ++i) {
-    if ((*this)[i-1]->rank < (*this)[i]->rank) {
+    if (at(i-1)->rank < at(i)->rank) {
       return false;
     }
   }
   return true;
 }
 
-bool Set::IsFlush() const {
-  int suit = (*this)[0]->suit;
+bool Set::IsStraight(bool three_cards) const {
+  assert(SortedFromLowToHigh());
+  if ((three_cards && size() != 3) || (!three_cards && size() != 5)) {
+    return false;
+  }
+  for (int i = 0; i < size()-2; ++i) {
+    if (at(i)->rank + 1 != at(i+1)->rank) {
+      return false;
+    }
+  }
+  // The case of A2345 but sorted as 2345A.
+  return at(size()-2)->rank + 1 == back()->rank ||
+    (front()->rank == TWO && back()->rank == ACE);
+}
+
+bool Set::IsFlush(bool three_cards) const {
+  if ((three_cards && size() != 3) || (!three_cards && size() != 5)) {
+    return false;
+  }
+  int suit = at(0)->suit;
   for (auto card : *this) {
     if (card->suit != suit) {
       return false;
@@ -68,21 +88,12 @@ bool Set::IsFlush() const {
   return true;
 }
 
-bool Set::IsStraight() const {
-  assert(SortedFromLowToHigh());
-  int num_cards = size();
-  for (int i = 0; i < num_cards-2; ++i) {
-    if ((*this)[i]->rank + 1 != (*this)[i+1]->rank) {
-      return false;
-    }
-  }
-  // The case of A2345 but sorted as 2345A.
-  return (*this)[num_cards-2]->rank + 1 == back()->rank ||
-    (front()->rank == TWO && back()->rank == ACE);
+bool Set::IsStraightFlush() const {
+  return IsFlush() && IsStraight();
 }
 
 bool Set::IsRoyalFlush() const {
-  return IsFlush() && IsStraight() && front()->rank == TEN && back()->rank == ACE;
+  return IsStraightFlush() && back()->rank == ACE;
 }
 
 void Set::SetInUse(bool in_use) {

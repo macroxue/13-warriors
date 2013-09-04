@@ -13,12 +13,14 @@ class Hand {
   Hand(const char* arg);
 
   void DealFrom(Deck* deck);
+  void ReadArrangement();
   void Arrange(const Strategy& strategy);
   void Show() const;
 
   Combo best() const { return best_; }
 
  private:
+  Card* FindCard(int suit, int rank);
   void AddCard(Card* card);
   void Evaluate(const Strategy& strategy, Combo& combo);
   void FindPatterns();
