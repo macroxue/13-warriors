@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
     if ((!input && r % 1000 == 0) || play) {
       for (int i = 0; i < 4; ++i) {
-        printf("%8s %d: %+4d\t",
+        printf("%8s %d: %+4d",
                (players[i].is_computer() ? "Computer" : "Human"),
                i+1, players[i].points());
         players[i].hand()->best().Show();

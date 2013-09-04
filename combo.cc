@@ -43,6 +43,7 @@ const char* Combo::CheckArrangement() const {
 }
 
 void Combo::Show() const {
+  printf("\t");
   for (auto pattern : *this) {
     printf("%s ", pattern_names[pattern.pattern()]);
   }

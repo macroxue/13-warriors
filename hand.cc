@@ -390,7 +390,12 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
 
   // Special case when the first and the middle are junks.
   if (first.pattern() == JUNK && middle.pattern() == JUNK) {
-    swap(unused_cards[0], unused_cards[3]);
+    if (unused_cards[0]->rank > unused_cards[1]->rank) {
+      swap(unused_cards[0], unused_cards[3]);
+    } else {
+      swap(unused_cards[0], unused_cards[3]);
+      swap(unused_cards[2], unused_cards[5]);
+    }
   }
 
   for (int i = first.size(); i < 3; ++i) {
@@ -406,9 +411,15 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
   // Special case when the first and the middle are junks.
   if (first.pattern() == JUNK && middle.pattern() == JUNK) {
     first.SortFromLowToHigh();
+    middle.SortFromLowToHigh();
   }
 
   combos_.push_back(Combo({first, middle, last}));
+  if (auto error = combos_.back().CheckArrangement()) {
+    combos_.back().Show();
+    fprintf(stderr, "Invalid arrangement: %s\n", error);
+    exit(-1);
+  }
 }
 
 Set Hand::GetUnusedCards() const {
