@@ -58,9 +58,9 @@ int main(int argc, char* argv[]) {
     }
     if ((!input && r % output_freq == 0) || play) {
       for (int i = 0; i < 4; ++i) {
-        printf("%8s %d: %+4d",
+        printf("%8s %d: %+3d/%+5d",
                (players[i].is_computer() ? "Computer" : "Human"),
-               i+1, players[i].points());
+               i+1, players[i].round_points(), players[i].points());
         players[i].hand()->best().Show();
       }
     }

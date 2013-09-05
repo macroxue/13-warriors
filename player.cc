@@ -2,11 +2,12 @@
 #include "score.h"
 
 Player::Player(int id, bool is_computer)
-  : id_(id), is_computer_(is_computer), points_(0), num_hands_(0), hand_(NULL),
-    strategy_(NULL) {
+  : id_(id), is_computer_(is_computer), points_(0), prev_points_(0),
+    num_hands_(0), hand_(NULL), strategy_(NULL) {
 }
 
 void Player::NewHand(Deck* deck) {
+  prev_points_ = points_;
   delete hand_;
   hand_ = new Hand;
   hand_->DealFrom(deck);
@@ -21,6 +22,7 @@ void Player::NewHand(Deck* deck) {
 }
 
 void Player::NewHand(const char* input) {
+  prev_points_ = points_;
   delete hand_;
   hand_ = new Hand(input);
   Arrange();

@@ -15,6 +15,7 @@ class Player {
   int id() const { return id_; }
   bool is_computer() const { return is_computer_; }
   int points() const { return points_; }
+  int round_points() const { return points_ - prev_points_; }
   Hand* hand() { return hand_; }
 
   void set_strategy(Strategy *strategy) { strategy_ = strategy; }
@@ -25,6 +26,7 @@ class Player {
   int   id_;
   bool  is_computer_;
   int   points_;
+  int   prev_points_;
   int   num_hands_;
   Hand* hand_;
   Strategy* strategy_;
