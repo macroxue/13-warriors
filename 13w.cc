@@ -19,13 +19,15 @@
 #endif
 
 int main(int argc, char* argv[]) {
+  int output_freq = 1000;
   char *input = NULL;
   bool play = false;
   int rounds = 1000;
   int seed = time(NULL);
   int c;
-  while ((c = getopt(argc, argv, "i:pr:s:")) != -1) {
+  while ((c = getopt(argc, argv, "f:i:pr:s:")) != -1) {
     switch (c) {
+      case 'f': output_freq = atoi(optarg); break;
       case 'i': input = optarg; break;
       case 'p': play = true; break;
       case 'r': rounds = atoi(optarg); break;
@@ -54,7 +56,7 @@ int main(int argc, char* argv[]) {
         players[i].Match(&players[j]);
       }
     }
-    if ((!input && r % 1000 == 0) || play) {
+    if ((!input && r % output_freq == 0) || play) {
       for (int i = 0; i < 4; ++i) {
         printf("%8s %d: %+4d",
                (players[i].is_computer() ? "Computer" : "Human"),
