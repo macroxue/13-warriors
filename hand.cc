@@ -15,8 +15,12 @@ Hand::Hand(const char* arg) {
   int suit = SPADE;
   for (; *arg; ++arg) {
     int c = toupper(*arg);
+    char* s = strchr(const_cast<char*>(suit_symbols), c);
     char* r = strchr(const_cast<char*>(rank_symbols), c);
-    if (r) {
+    if (s) {
+      suit = s - suit_symbols;
+    }
+    else if (r) {
       int rank = r - rank_symbols;
       AddCard(deck_.FindCard(suit, rank));
     } else if (c == ',') {
@@ -108,11 +112,14 @@ void Hand::ReadArrangement() {
     if (!set.empty()) {
       combo.push_back(Pattern(set));
     }
-    auto error = combo.CheckArrangement();
-    if (error) {
-      combo.Show();
-      fprintf(stderr, "Invalid arrangement: %s\n", error);
-      continue;
+    combo.DetermineType();
+    if (!combo.IsNatural()) {
+      auto error = combo.CheckArrangement();
+      if (error) {
+        combo.Show();
+        fprintf(stderr, "Invalid arrangement: %s\n", error);
+        continue;
+      }
     }
     best_ = combo;
     break;
@@ -150,17 +157,17 @@ void Hand::Arrange(const Strategy& strategy) {
   if (naturals_.empty() && combos_.empty()) {
     ShowHand();
     ShowPatterns();
+    fprintf(stderr, "Internal error: no card arrangements\n");
+    exit(-1);
   }
 
   for (auto& natural : naturals_) {
-    natural.set_is_natural(true);
     Evaluate(strategy, natural);
     if (best_.empty() || natural.score() > best_.score()) {
       best_ = natural;
     }
   }
   for (auto& combo : combos_) {
-    combo.set_is_natural(false);
     Evaluate(strategy, combo);
     if (best_.empty() || combo.score() > best_.score()) {
       best_ = combo;
@@ -169,7 +176,7 @@ void Hand::Arrange(const Strategy& strategy) {
 }
 
 void Hand::Evaluate(const Strategy& strategy, Combo& combo) {
-  if (combo.is_natural()) {
+  if (combo.IsNatural()) {
     combo.set_score(natural_points);
   } else {
     double w0 = strategy.GetWinningProbability(0, combo[0]);
@@ -273,14 +280,22 @@ bool Hand::ThreeFlushes() {
     }
   }
   naturals_.push_back(natural);
+  naturals_.back().set_type(Combo::THREE_FLUSHES);
   return true;
 }
 
 bool Hand::SixPairs() {
   if (patterns_[PAIR].size() + patterns_[TRIPLE].size()
       + patterns_[FOUR_OF_A_KIND].size()*2 == 6) {
-    naturals_.push_back(patterns_[PAIR] + patterns_[TRIPLE]
-                        + patterns_[FOUR_OF_A_KIND]);
+    Combo six_pairs = patterns_[PAIR] + patterns_[TRIPLE] + patterns_[FOUR_OF_A_KIND];
+    for (int i = TWO; i < NUM_RANKS; ++i) {
+      if (ranks_[i].size() == 1) {
+        six_pairs.push_back(ranks_[i]);
+        break;
+      }
+    }
+    naturals_.push_back(six_pairs);
+    naturals_.back().set_type(Combo::SIX_PAIRS);
     return true;
   }
   return false;
@@ -307,6 +322,7 @@ bool Hand::ThreeStraights() {
       if (unused_cards.IsStraight(true)) {
         naturals_.push_back(Combo{Pattern(unused_cards, STRAIGHT),
                             straights[m], straights[l]});
+        naturals_.back().set_type(Combo::THREE_STRAIGHTS);
         return true;
       }
 

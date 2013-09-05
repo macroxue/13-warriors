@@ -38,13 +38,13 @@ void Player::Match(Player* other) {
   Combo c2 = other->hand()->best();
 
   int match_points = 0;
-  if (c1.is_natural()) {
-    if (c2.is_natural()) {
+  if (c1.IsNatural()) {
+    if (c2.IsNatural()) {
       // Tie.
     } else {
       match_points = sweep_points;
     }
-  } else if (c2.is_natural()) {
+  } else if (c2.IsNatural()) {
     match_points = -sweep_points;
   } else {
     // Match sets one by one.

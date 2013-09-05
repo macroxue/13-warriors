@@ -1,11 +1,30 @@
 #include "combo.h"
 
 Combo::Combo()
-  : score_(0), is_natural_(false) {
+  : score_(0), type_(REGULAR) {
 }
 
 Combo::Combo(std::initializer_list<Pattern> patterns)
-  : vector<Pattern>(patterns), score_(0), is_natural_(false) {
+  : vector<Pattern>(patterns), score_(0), type_(REGULAR) {
+}
+
+void Combo::DetermineType() {
+  type_ = REGULAR;
+  if (size() == 6) {
+    type_ = SIX_PAIRS;
+    for (auto p : *this) {
+      if (p.pattern() != PAIR) {
+        type_ = REGULAR;
+      }
+    }
+  } else if (size() == 3) {
+    if (at(0).IsStraight(true) && at(1).IsStraight() && at(2).IsStraight()) {
+      type_ = THREE_STRAIGHTS;
+    }
+    if (at(0).IsFlush(true) && at(1).IsFlush() && at(2).IsFlush()) {
+      type_ = THREE_FLUSHES;
+    }
+  }
 }
 
 Combo Combo::operator + (const Combo& c) const {
@@ -44,8 +63,12 @@ const char* Combo::CheckArrangement() const {
 
 void Combo::Show() const {
   printf("\t");
-  for (auto pattern : *this) {
-    printf("%s ", pattern_names[pattern.pattern()]);
+  if (IsNatural()) {
+    printf("%s ", TypeName());
+  } else {
+    for (auto pattern : *this) {
+      printf("%s ", pattern_names[pattern.pattern()]);
+    }
   }
   printf(", ");
   for (auto pattern : *this) {
