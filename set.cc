@@ -93,7 +93,7 @@ bool Set::IsStraightFlush() const {
 }
 
 bool Set::IsRoyalFlush() const {
-  return IsStraightFlush() && back()->rank == ACE;
+  return IsStraightFlush() && front()->rank == TEN && back()->rank == ACE;
 }
 
 void Set::SetInUse(bool in_use) {
