@@ -52,6 +52,13 @@ Pattern::Pattern(const Set& set)
 
 Pattern::Pattern(const Set& set, int pattern)
   : Set(set), pattern_(pattern) {
+  if ((pattern == STRAIGHT || pattern == STRAIGHT_FLUSH) &&
+      set.front()->rank == TWO && set.back()->rank == ACE) {
+    // Move ACE to the front so it becomes ONE.
+    auto ace = back();
+    pop_back();
+    insert(begin(), ace);
+  }
 }
 
 void Pattern::Show() const {
