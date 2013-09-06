@@ -10,10 +10,11 @@ class Strategy {
   void Update(int nth, const Pattern& p, int result);
 
   double GetWinningProbability(int nth, const Pattern& p) const;
-  void UpdateWinningProbabilities();
-  void ShowWinningProbabilities() const;
+  void Show() const;
 
  private:
+  void Refresh();
+
   struct Stat {
     double win_prob;
     int    wins;
@@ -21,6 +22,8 @@ class Strategy {
   };
 
   Stat stats_[3][NUM_PATTERNS][NUM_RANKS];
+
+  int num_updates;
 };
 
 #endif  // STRATEGY_H_

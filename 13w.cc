@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     me.hand()->Show();
   } else {
     for (int i = 0; i < 4; ++i) {
-      strategies[i].ShowWinningProbabilities();
+      strategies[i].Show();
     }
   }
   return 0;

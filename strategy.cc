@@ -3,7 +3,8 @@
 #include "hand.h"
 #include "strategy.h"
 
-Strategy::Strategy() {
+Strategy::Strategy()
+  : num_updates(0) {
   static const double init_win_prob[3][NUM_PATTERNS] = {
     {.3, .6,  0,  1,  0,  0,  0, 0, 0, 0},
     { 0, .1, .4, .7, .8, .9,  1, 1, 1, 1},
@@ -26,6 +27,10 @@ void Strategy::Update(int nth, const Pattern& p, int result) {
     ++stats_[nth][p.pattern()][r].wins;
   }
   ++stats_[nth][p.pattern()][r].total;
+  ++num_updates;
+  if (num_updates % 100 == 0) {
+    Refresh();
+  }
 }
 
 double Strategy::GetWinningProbability(int nth, const Pattern& p) const {
@@ -33,7 +38,7 @@ double Strategy::GetWinningProbability(int nth, const Pattern& p) const {
   return stats_[nth][p.pattern()][high_rank].win_prob;
 }
 
-void Strategy::UpdateWinningProbabilities() {
+void Strategy::Refresh() {
   for (int r = 0; r < NUM_RANKS; ++r) {
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < NUM_PATTERNS; ++j) {
@@ -46,7 +51,7 @@ void Strategy::UpdateWinningProbabilities() {
   }
 }
 
-void Strategy::ShowWinningProbabilities() const {
+void Strategy::Show() const {
   const int name_width = 14;
   const int data_width = 5;
   for (int p = 0; p < NUM_PATTERNS; ++p) {

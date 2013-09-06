@@ -11,14 +11,7 @@ void Player::NewHand(Deck* deck) {
   delete hand_;
   hand_ = new Hand;
   hand_->DealFrom(deck);
-
   Arrange();
-  if (is_computer_) {
-    ++num_hands_;
-    if (num_hands_ % (100 * (id_+1)) == 0) {
-      strategy_->UpdateWinningProbabilities();
-    }
-  }
 }
 
 void Player::NewHand(const char* input) {
