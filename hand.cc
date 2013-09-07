@@ -286,6 +286,13 @@ bool Hand::ThreeFlushes() {
       natural.push_back(Pattern(suit, FLUSH));
     }
   }
+  // Move the 3-card set to the front.
+  for (int i = 0; i < 3; i++) {
+    if (natural[i].size() == 3 && i != 0) {
+      swap(natural[i], natural[0]);
+      break;
+    }
+  }
   naturals_.push_back(natural);
   naturals_.back().set_type(Combo::THREE_FLUSHES);
   return true;
