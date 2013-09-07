@@ -10,19 +10,34 @@ Combo::Combo(std::initializer_list<Pattern> patterns)
 
 void Combo::DetermineType() {
   type_ = REGULAR;
-  if (size() == 6) {
-    type_ = SIX_PAIRS;
-    for (auto p : *this) {
-      if (p.pattern() != PAIR) {
-        type_ = REGULAR;
-      }
+
+  int num_pairs = 0;
+  for (auto p : *this) {
+    if (p.pattern() == PAIR) {
+      num_pairs += 1;
+    } else if (p.pattern() == TRIPLE) {
+      num_pairs += 1;
+    } else if (p.pattern() == FOUR_OF_A_KIND) {
+      num_pairs += 2;
     }
-  } else if (size() == 3) {
-    if (at(0).IsStraight(true) && at(1).IsStraight() && at(2).IsStraight()) {
+  }
+  if (num_pairs == 6) {
+    type_ = SIX_PAIRS;
+    return;
+  }
+
+  if (size() == 3) {
+    if (at(0).pattern() == JUNK && at(0).IsStraight(true) &&
+        (at(1).pattern() == STRAIGHT || at(1).pattern() == STRAIGHT_FLUSH ||
+         at(1).pattern() == ROYAL_FLUSH) &&
+        (at(2).pattern() == STRAIGHT || at(2).pattern() == STRAIGHT_FLUSH ||
+         at(2).pattern() == ROYAL_FLUSH)) {
       type_ = THREE_STRAIGHTS;
+      return;
     }
     if (at(0).IsFlush(true) && at(1).IsFlush() && at(2).IsFlush()) {
       type_ = THREE_FLUSHES;
+      return;
     }
   }
 }

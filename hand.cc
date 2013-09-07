@@ -112,6 +112,13 @@ void Hand::ReadArrangement() {
     if (!set.empty()) {
       combo.push_back(Pattern(set));
     }
+    Set unused_cards = GetUnusedCards();
+    if (!unused_cards.empty()) {
+      fprintf(stderr, "Cards not used: ");
+      unused_cards.Show(stderr);
+      fprintf(stderr, "\n");
+      continue;
+    }
     combo.DetermineType();
     if (!combo.IsNatural()) {
       auto error = combo.CheckArrangement();

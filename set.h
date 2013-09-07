@@ -12,6 +12,8 @@ class Set : public vector<Card*> {
   Set(std::initializer_list<Card*> cards);
   Set(Set::const_iterator begin, Set::const_iterator end);
 
+  void Show(FILE *fp = stdout);
+
   void SortFromLowToHigh();
   void SortFromHighToLow();
 

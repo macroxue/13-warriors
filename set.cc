@@ -16,6 +16,12 @@ Set::Set(Set::const_iterator begin, Set::const_iterator end)
   : vector<Card*>(begin, end) {
 }
 
+void Set::Show(FILE *fp) {
+  for (auto card : *this) {
+    card->Show(fp);
+  }
+}
+
 void Set::SortFromLowToHigh() {
   if (empty()) {
     return;
