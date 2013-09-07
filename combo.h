@@ -21,6 +21,7 @@ class Combo : public vector<Pattern> {
     return type_names[type_];
   }
 
+  bool MaybeBetterThan(const Combo& c) const;
   const char* CheckArrangement() const;
 
   void Show() const;

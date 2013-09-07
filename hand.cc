@@ -416,7 +416,13 @@ void Hand::GenerateCombos(int first, int middle, int last) {
 
 void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
   Set unused_cards = GetUnusedCards();
-  int next = 0;
+
+  // Skip if there is a pair unused.
+  for (int i = 1; i < unused_cards.size(); ++i) {
+    if (unused_cards[i]->rank == unused_cards[i-1]->rank) {
+      return;
+    }
+  }
 
   // Special case when the first and the middle are junks.
   if (first.pattern() == JUNK && middle.pattern() == JUNK) {
@@ -428,6 +434,7 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
     }
   }
 
+  int next = 0;
   for (int i = first.size(); i < 3; ++i) {
     first.insert(first.begin(), unused_cards[next++]);
   }
@@ -444,11 +451,14 @@ void Hand::AddCombo(Pattern first, Pattern middle, Pattern last) {
     middle.SortFromLowToHigh();
   }
 
-  combos_.push_back(Combo({first, middle, last}));
-  if (auto error = combos_.back().CheckArrangement()) {
-    combos_.back().Show();
-    fprintf(stderr, "Invalid arrangement: %s\n", error);
-    exit(-1);
+  Combo combo = {first, middle, last};
+  if (combos_.empty() || combo.MaybeBetterThan(combos_.back())) {
+    combos_.push_back(combo);
+    if (auto error = combos_.back().CheckArrangement()) {
+      combos_.back().Show();
+      fprintf(stderr, "Invalid arrangement: %s\n", error);
+      exit(-1);
+    }
   }
 }
 

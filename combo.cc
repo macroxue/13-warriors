@@ -48,6 +48,12 @@ Combo Combo::operator + (const Combo& c) const {
   return combo;
 }
 
+bool Combo::MaybeBetterThan(const Combo& c) const {
+  return at(0).Compare(c[0]) == 1 ||
+         at(1).Compare(c[1]) == 1 ||
+         at(2).Compare(c[2]) == 1;
+}
+
 const char* Combo::CheckArrangement() const {
   if (size() == 3) {
     if (at(0).size() != 3) {
