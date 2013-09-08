@@ -3,8 +3,8 @@
 #include "hand.h"
 #include "strategy.h"
 
-Strategy::Strategy()
-  : num_updates(0) {
+Strategy::Strategy(int min_1st_rank)
+  : num_updates_(0), min_1st_rank_(min_1st_rank) {
   static const int win_percent[NUM_PATTERNS][3][NUM_RANKS] = {
     { // 1   2   3   4   5   6   7   8   9   T   J   Q   K   A   JUNK
       {  0,  0,  0,  0,  0,  0,  1,  1,  2,  2,  4,  7, 14, 33 },
@@ -57,6 +57,12 @@ Strategy::Strategy()
       }
     }
   }
+  for (int r = min_1st_rank_; r < NUM_RANKS; ++r) {
+    for (int r2 = 1; r2 < NUM_RANKS; ++r2) {
+      junk0_[r][r2] = stats_[0][JUNK][r];
+      flush2_[r][r2] = stats_[2][FLUSH][r];
+    }
+  }
 }
 
 void Strategy::Update(int nth, const Pattern& p, int result) {
@@ -65,15 +71,43 @@ void Strategy::Update(int nth, const Pattern& p, int result) {
     ++stats_[nth][p.pattern()][r].wins;
   }
   ++stats_[nth][p.pattern()][r].total;
-  ++num_updates;
-  if (num_updates % 100 == 0) {
+
+  if (r >= min_1st_rank_) {
+    int r2 = p[p.size()-2]->rank;
+    if (p.pattern() == JUNK && nth == 0) {
+      if (result == 1) {
+        ++junk0_[r][r2].wins;
+      }
+      ++junk0_[r][r2].total;
+    }
+    if (p.pattern() == FLUSH && nth == 2) {
+      if (result == 1) {
+        ++flush2_[r][r2].wins;
+      }
+      ++flush2_[r][r2].total;
+    }
+  }
+
+  ++num_updates_;
+  if (num_updates_ % 100 == 0) {
     Refresh();
   }
 }
 
 double Strategy::GetWinningProbability(int nth, const Pattern& p) const {
-  int high_rank = p.set().back()->rank;
-  return stats_[nth][p.pattern()][high_rank].win_prob;
+  int r = p.back()->rank;
+
+  if (r >= min_1st_rank_) {
+    int r2 = p[p.size()-2]->rank;
+    if (p.pattern() == JUNK && nth == 0) {
+      return junk0_[r][r2].win_prob;
+    }
+    if (p.pattern() == FLUSH && nth == 2) {
+      return flush2_[r][r2].win_prob;
+    }
+  }
+
+  return stats_[nth][p.pattern()][r].win_prob;
 }
 
 void Strategy::Refresh() {
@@ -84,6 +118,17 @@ void Strategy::Refresh() {
         if (stat->total >= 10) {
           stat->win_prob = double(stat->wins)/stat->total;
         }
+      }
+    }
+  }
+
+  for (int r = min_1st_rank_; r < NUM_RANKS; ++r) {
+    for (int r2 = 0; r2 < NUM_RANKS; ++r2) {
+      if (junk0_[r][r2].total >= 10) {
+        junk0_[r][r2].win_prob = double(junk0_[r][r2].wins)/junk0_[r][r2].total;
+      }
+      if (flush2_[r][r2].total >= 10) {
+        flush2_[r][r2].win_prob = double(flush2_[r][r2].wins)/flush2_[r][r2].total;
       }
     }
   }
@@ -101,14 +146,32 @@ void Strategy::Show() const {
     for (int s = 0; s < 3; ++s) {
       printf("%*d:", name_width, s+1);
       for (int r = 1; r < NUM_RANKS; ++r) {
-        auto* stat = &stats_[s][p][r];
-        if (stat->total >= 10) {
-          printf("%*.0f%%", data_width-1, stat->win_prob*100);
+        auto& stat = stats_[s][p][r];
+        if (stat.total >= 10) {
+          printf("%*.0f%%", data_width-1, stat.win_prob*100);
         } else {
           printf("%*c", data_width, '-');
         }
       }
       printf("\n");
+    }
+    if (p == JUNK || p == FLUSH) {
+      for (int r = min_1st_rank_; r < NUM_RANKS; ++r) {
+        printf("%*c-?:", name_width-2, rank_symbols[r]);
+        for (int r2 = 1; r2 < NUM_RANKS; ++r2) {
+          const Stat* stat;
+          if (p == JUNK)
+            stat = &junk0_[r][r2];
+          else
+            stat = &flush2_[r][r2];
+          if (stat->total >= 10) {
+            printf("%*.0f%%", data_width-1, stat->win_prob*100);
+          } else {
+            printf("%*c", data_width, '-');
+          }
+        }
+        printf("\n");
+      }
     }
   }
 }

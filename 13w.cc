@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   printf("SEED:\t\t%d\n", seed);
   srand(seed);
 
-  Strategy strategies[4];
+  Strategy strategies[4] = { Strategy(ACE), Strategy(), Strategy(), Strategy() };
   Player players[4] = { Player(0, !play), Player(1), Player(2), Player(3) };
   for (int i = 0; i < 4; ++i) {
     players[i].set_strategy(&strategies[i]);
