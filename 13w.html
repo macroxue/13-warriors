@@ -1,0 +1,690 @@
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+    <title>十三水•Chinese Poker</title>
+    <base target='_self'>
+    <style>
+h1 {
+  color: brown;
+  font-size: 40px;
+}
+h2 {
+  color: brown;
+  font-size: 30px;
+}
+td.menu {
+  font-size: 20px;
+}
+button.menu {
+  font-size: 20px;
+}
+button.sort {
+  font-size: 20px;
+}
+button.move {
+  font-size: 30px;
+}
+td.move {
+  text-align: center;
+}
+table.hand {
+  background-color: green;
+  border-radius: 5px;
+  padding: 2px;
+}
+table.card {
+  background-color: white;
+  border-radius: 5px;
+  padding: 0px;
+  text-align: center;
+  width: 60px;
+}
+td.rank {
+  font-size: 30px;
+}
+td.suit {
+  font-size: 24px;
+}
+    </style>
+    <script>
+var suit_symbols = {
+  S: '<font color="black">♠</font>',
+  H: '<font color="red">♥</font>',
+  D: '<font color="red">♦</font>',
+  C: '<font color="black">♣</font>'
+};
+
+var rank_symbol = [ '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                    'J', 'Q', 'K', 'A' ];
+var suit_symbol = [ 'S', 'H', 'C', 'D' ];
+var rank_order = {};
+var suit_order = {};
+
+var hand = [];
+var panel_size = { front: 3, center: 5, back: 5 };
+var panel = { front: [], center: [], back: [] };
+var active_panel = 'front';
+var membership = {};
+var saved_layouts = [];
+
+function initialize_on_load() {
+  for (var i = 0; i < rank_symbol.length; ++i) {
+    rank_order[rank_symbol[i]] = i;
+  }
+  for (var i = 0; i < suit_symbol.length; ++i) {
+    suit_order[suit_symbol[i]] = i;
+  }
+  deal_hand();
+}
+
+function deal_hand() {
+  var deck = [];
+  for (var i = 0; i < 52; ++i) {
+    deck.push(i);
+  }
+  for (var i = 0; i < 13; ++i) {
+    var pos = Math.floor(Math.random() * (52 - i));
+    var card = deck[pos];
+    deck[pos] = deck[52 - i - 1];
+    hand[i] = suit_symbol[Math.floor(card / 13)] + rank_symbol[card % 13];
+  }
+
+  membership = {};
+  sort_by_suit();
+  redraw_hand();
+  for (var name in panel) {
+    panel[name] = [];
+    redraw_panel(name);
+  }
+  activate_panel('front');
+  saved_layouts = [];
+  set_inner_html('load', '');
+}
+
+function sort_by_rank() {
+  hand.sort(function(a, b) {
+    return rank_order[a.slice(1)] - rank_order[b.slice(1)]; });
+  redraw_hand();
+}
+
+function sort_by_suit() {
+  hand.sort(function(a, b) {
+    var a_order = suit_order[a.charAt(0)];
+    var b_order = suit_order[b.charAt(0)];
+    if (a_order == b_order) {
+      a_order = rank_order[a.slice(1)];
+      b_order = rank_order[b.slice(1)];
+    }
+    return a_order - b_order;
+  });
+  redraw_hand();
+}
+
+function redraw_hand() {
+  for (var i = 0; i < 13; ++i) {
+    set_card('', i, hand[i]);
+    if (membership[hand[i]] == null) {
+      enable_card('', i);
+    } else {
+      disable_card('', i);
+    }
+  }
+}
+
+function activate_panel(name) {
+  document.getElementById(active_panel).style.backgroundColor = 'green';
+  document.getElementById(name).style.backgroundColor = 'orange';
+  active_panel = name;
+}
+
+function move_card(index) {
+  var card = hand[index];
+  if (membership[card] != null) {
+    var name = membership[card];
+    for (var i = 0; i < panel[name].length; ++i) {
+      if (panel[name][i] == card) {
+        undo_card(membership[card], i);
+        break;
+      }
+    }
+    return;
+  }
+
+  disable_card('', index);
+  membership[card] = active_panel;
+  panel[active_panel].push(card);
+  sort_panel(active_panel);
+
+  if (panel[active_panel].length == panel_size[active_panel]) {
+    for (var name in panel) {
+      if (panel[name].length < panel_size[name]) {
+        activate_panel(name);
+        break;
+      }
+    }
+  }
+}
+
+function sort_panel(name) {
+  panel[name].sort(function(a, b) {
+    return rank_order[a.slice(1)] - rank_order[b.slice(1)]; });
+  redraw_panel(name);
+}
+
+function fill_panel(name) {
+  activate_panel(name);
+  for (var i = panel[name].length; i < panel_size[name]; ++i) {
+    for (var j = 0; j < 13; ++j) {
+      if (membership[hand[j]] == null) {
+        move_card(j);
+        break;
+      }
+    }
+  }
+}
+
+function move_all_cards() {
+  for (var i = 0; i < 13; ++i) {
+    move_card(i);
+  }
+}
+
+function undo_all_cards() {
+  for (var name in panel) {
+    clear_panel(name);
+  }
+}
+
+function clear_panel(name) {
+  for (var i = panel[name].length - 1; i >= 0; --i) {
+    undo_card(name, i);
+  }
+  redraw_panel(name);
+}
+
+function undo_card(name, index) {
+  if (panel[name].length <= index) {
+    redraw_panel(name);
+    return;
+  }
+
+  var card = panel[name][index];
+  for (var i = 0; i < 13; ++i) {
+    if (hand[i] == card) {
+      enable_card('', i);
+      delete membership[card];
+      break;
+    }
+  }
+  panel[name].splice(index, 1);
+  redraw_panel(name);
+}
+
+function redraw_panel(name) {
+  for (var i = 0; i < panel[name].length; ++i) {
+    set_card(name + '_', i, panel[name][i]);
+  }
+  for (var i = panel[name].length; i < panel_size[name]; ++i) {
+    clear_card(name + '_', i);
+  }
+  activate_panel(name);
+}
+
+function set_card(panel, index, card) {
+  var suit = card[0];
+  var rank = card.slice(1);
+  set_inner_html(panel + 'suit_' + index, suit_symbols[suit]);
+  set_inner_html(panel + 'rank_' + index, rank);
+}
+
+function clear_card(panel, index) {
+  set_inner_html(panel + 'suit_' + index, '?');
+  set_inner_html(panel + 'rank_' + index, '?');
+}
+
+function enable_card(panel, index) {
+  var id = panel + 'card_' + index;
+  document.getElementById(id).style.backgroundColor = 'white';
+}
+
+function disable_card(panel, index) {
+  var id = panel + 'card_' + index;
+  document.getElementById(id).style.backgroundColor = 'grey';
+}
+
+function set_inner_html(id, value) {
+  document.getElementById(id).innerHTML = value;
+}
+
+function save_layout() {
+  for (var name in panel) {
+    if (panel[name].length < panel_size[name]) {
+      alert("Please finish all three waves before saving them.");
+      return;
+    }
+  }
+  var number = saved_layouts.length;
+  saved_layouts.push({});
+  for (var card in membership) {
+    saved_layouts[number][card] = membership[card];
+  }
+
+  var button = document.createElement('BUTTON');
+  button.innerHTML = '#' + (number + 1);
+  button.className = 'menu';
+  button.onclick = function() { load_layout(number) };
+  document.getElementById('load').appendChild(button);
+}
+
+function load_layout(number) {
+  for (var card in saved_layouts[number]) {
+    membership[card] = saved_layouts[number][card];
+  }
+
+  for (var name in panel) {
+    panel[name] = [];
+  }
+  for (var card in membership) {
+    panel[membership[card]].push(card);
+  }
+  for (var name in panel) {
+    sort_panel(name);
+  }
+  redraw_hand();
+}
+    </script>
+  </head>
+  <body onload='initialize_on_load()'>
+    <h1>十三水•Chinese Poker</h1>
+    <hr/>
+    <h2>AI</h2>
+    <table>
+      <tr>
+        <td>
+          <table class='hand' id='ai_front'>
+            <tr>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_front_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='ai_front_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_front_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='ai_front_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_front_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='ai_front_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table class='hand' id='ai_center'>
+            <tr>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_center_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='ai_center_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_center_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='ai_center_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_center_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='ai_center_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_center_rank_3'>?</td></tr>
+                  <tr><td class='suit' id='ai_center_suit_3'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_center_rank_4'>?</td></tr>
+                  <tr><td class='suit' id='ai_center_suit_4'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table class='hand' id='ai_back'>
+            <tr>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_back_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='ai_back_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_back_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='ai_back_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_back_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='ai_back_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_back_rank_3'>?</td></tr>
+                  <tr><td class='suit' id='ai_back_suit_3'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card'>
+                  <tr><td class='rank' id='ai_back_rank_4'>?</td></tr>
+                  <tr><td class='suit' id='ai_back_suit_4'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <hr/>
+
+    <table>
+      <tr>
+        <td>
+          <h2>Player &nbsp; &nbsp;</h2>
+        </td>
+        <td>
+          <button class='menu' onclick='deal_hand()'>New deal</button>
+        </td>
+        <td>
+          &nbsp; &nbsp; &nbsp; &nbsp;
+        </td>
+        <td>
+          <button class='menu' onclick='save_layout()'>Save</button>
+        </td>
+        <td class='menu'>
+          &nbsp; &nbsp; Load:
+        </td>
+        <td id='load'>
+        </td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <td>
+          <table class='hand' id='front'>
+            <tr>
+              <td>
+                <table class='card' onclick='undo_card("front", 0)'>
+                  <tr><td class='rank' id='front_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='front_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("front", 1)'>
+                  <tr><td class='rank' id='front_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='front_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("front", 2)'>
+                  <tr><td class='rank' id='front_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='front_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table class='hand' id='center'>
+            <tr>
+              <td>
+                <table class='card' onclick='undo_card("center", 0)'>
+                  <tr><td class='rank' id='center_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='center_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("center", 1)'>
+                  <tr><td class='rank' id='center_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='center_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("center", 2)'>
+                  <tr><td class='rank' id='center_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='center_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("center", 3)'>
+                  <tr><td class='rank' id='center_rank_3'>?</td></tr>
+                  <tr><td class='suit' id='center_suit_3'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("center", 4)'>
+                  <tr><td class='rank' id='center_rank_4'>?</td></tr>
+                  <tr><td class='suit' id='center_suit_4'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table class='hand' id='back'>
+            <tr>
+              <td>
+                <table class='card' onclick='undo_card("back", 0)'>
+                  <tr><td class='rank' id='back_rank_0'>?</td></tr>
+                  <tr><td class='suit' id='back_suit_0'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("back", 1)'>
+                  <tr><td class='rank' id='back_rank_1'>?</td></tr>
+                  <tr><td class='suit' id='back_suit_1'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("back", 2)'>
+                  <tr><td class='rank' id='back_rank_2'>?</td></tr>
+                  <tr><td class='suit' id='back_suit_2'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("back", 3)'>
+                  <tr><td class='rank' id='back_rank_3'>?</td></tr>
+                  <tr><td class='suit' id='back_suit_3'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' onclick='undo_card("back", 4)'>
+                  <tr><td class='rank' id='back_rank_4'>?</td></tr>
+                  <tr><td class='suit' id='back_suit_4'>?</td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td class='move'>
+          <button class='move' onclick='fill_panel("front")'>⇈</button>
+          &nbsp; &nbsp;
+          <button class='move' onclick='clear_panel("front")'>⇊</button>
+        </td>
+        <td class='move'>
+          <button class='move' onclick='fill_panel("center")'>⇈</button>
+          &nbsp; &nbsp;
+          <button class='move' onclick='clear_panel("center")'>⇊</button>
+        </td>
+        <td class='move'>
+          <button class='move' onclick='fill_panel("back")'>⇈</button>
+          &nbsp; &nbsp;
+          <button class='move' onclick='clear_panel("back")'>⇊</button>
+        </td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <td>
+          <table class='hand'>
+            <tr>
+              <td>
+                <table class='card' id='card_0' onclick='move_card(0)'>
+                  <tr><td class='rank' id='rank_0'></td></tr>
+                  <tr><td class='suit' id='suit_0'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_1' onclick='move_card(1)'>
+                  <tr><td class='rank' id='rank_1'></td></tr>
+                  <tr><td class='suit' id='suit_1'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_2' onclick='move_card(2)'>
+                  <tr><td class='rank' id='rank_2'></td></tr>
+                  <tr><td class='suit' id='suit_2'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_3' onclick='move_card(3)'>
+                  <tr><td class='rank' id='rank_3'></td></tr>
+                  <tr><td class='suit' id='suit_3'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_4' onclick='move_card(4)'>
+                  <tr><td class='rank' id='rank_4'></td></tr>
+                  <tr><td class='suit' id='suit_4'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_5' onclick='move_card(5)'>
+                  <tr><td class='rank' id='rank_5'></td></tr>
+                  <tr><td class='suit' id='suit_5'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_6' onclick='move_card(6)'>
+                  <tr><td class='rank' id='rank_6'></td></tr>
+                  <tr><td class='suit' id='suit_6'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_7' onclick='move_card(7)'>
+                  <tr><td class='rank' id='rank_7'></td></tr>
+                  <tr><td class='suit' id='suit_7'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_8' onclick='move_card(8)'>
+                  <tr><td class='rank' id='rank_8'></td></tr>
+                  <tr><td class='suit' id='suit_8'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_9' onclick='move_card(9)'>
+                  <tr><td class='rank' id='rank_9'></td></tr>
+                  <tr><td class='suit' id='suit_9'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_10' onclick='move_card(10)'>
+                  <tr><td class='rank' id='rank_10'></td></tr>
+                  <tr><td class='suit' id='suit_10'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_11' onclick='move_card(11)'>
+                  <tr><td class='rank' id='rank_11'></td></tr>
+                  <tr><td class='suit' id='suit_11'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+              <td>
+                <table class='card' id='card_12' onclick='move_card(12)'>
+                  <tr><td class='rank' id='rank_12'></td></tr>
+                  <tr><td class='suit' id='suit_12'></td></tr>
+                  <tr><td></td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table>
+            <tr>
+              <td>
+                <button class='sort' onclick='sort_by_rank()'>
+                  Sort by rank
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <button class='sort' onclick='sort_by_suit()'>
+                  Sort by suit
+                </button>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <hr/>
+  </body>
+</html>
