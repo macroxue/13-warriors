@@ -60,17 +60,17 @@ var two = 0, three = 1, four = 2, five = 3, six = 4, seven = 5, eight = 6,
     nine = 7, ten = 8, jack = 9, queen = 10, king = 11, ace = 12;
 
 var hand = [];
-var panel_size = { front: 3, center: 5, back: 5 };
-var panel_value = { front: 0, center: 0, back: 0 };
-var panel = { front: [], center: [], back: [] };
-var active_panel = 'front';
+var wave_sizes = { front: 3, center: 5, back: 5 };
+var wave_values = { front: 0, center: 0, back: 0 };
+var waves = { front: [], center: [], back: [] };
 var membership = {};
-var saved_layouts = [];
+var active_wave = 'front';
+var saved_waves = [];
 
 function suit(card) { return Math.floor(card / 13); }
 function rank(card) { return card % 13; }
 
-function deal_hand() {
+function deal_new_hand() {
   var deck = [];
   for (var i = 0; i < 52; ++i) {
     deck.push(i);
@@ -85,12 +85,12 @@ function deal_hand() {
   membership = {};
   sort_by_suit();
   redraw_hand();
-  for (var name in panel) {
-    panel[name] = [];
-    redraw_panel(name);
+  for (var name in waves) {
+    waves[name] = [];
+    redraw_wave(name);
   }
   undo_all_cards();
-  saved_layouts = [];
+  saved_waves = [];
   set_inner_html('load', '');
 }
 
@@ -117,18 +117,18 @@ function redraw_hand() {
   }
 }
 
-function activate_panel(name) {
-  document.getElementById(active_panel).style.backgroundColor = 'green';
+function activate_wave(name) {
+  document.getElementById(active_wave).style.backgroundColor = 'green';
   document.getElementById(name).style.backgroundColor = 'orange';
-  active_panel = name;
+  active_wave = name;
 }
 
 function move_card(index) {
   var card = hand[index];
   if (membership[card] != null) {
     var name = membership[card];
-    for (var i = 0; i < panel[name].length; ++i) {
-      if (panel[name][i] == card) {
+    for (var i = 0; i < waves[name].length; ++i) {
+      if (waves[name][i] == card) {
         undo_card(membership[card], i);
         break;
       }
@@ -137,22 +137,22 @@ function move_card(index) {
   }
 
   disable_card('', index);
-  membership[card] = active_panel;
-  panel[active_panel].push(card);
-  sort_panel(active_panel);
+  membership[card] = active_wave;
+  waves[active_wave].push(card);
+  sort_wave(active_wave);
 
-  if (panel[active_panel].length == panel_size[active_panel]) {
-    for (var name in panel) {
-      if (panel[name].length < panel_size[name]) {
-        activate_panel(name);
+  if (waves[active_wave].length == wave_sizes[active_wave]) {
+    for (var name in waves) {
+      if (waves[name].length < wave_sizes[name]) {
+        activate_wave(name);
         break;
       }
     }
   }
 }
 
-function sort_panel(name) {
-  var cards = panel[name];
+function sort_wave(name) {
+  var cards = waves[name];
   cards.sort(function(a, b) { return rank(a) - rank(b); });
   // Special case for 2345A.
   if (cards.length == 5 && rank(cards[0]) == two &&
@@ -165,12 +165,12 @@ function sort_panel(name) {
     cards[1] = cards[0];
     cards[0] = temp;
   }
-  redraw_panel(name);
+  redraw_wave(name);
 }
 
-function fill_panel(name) {
-  activate_panel(name);
-  for (var i = panel[name].length; i < panel_size[name]; ++i) {
+function fill_wave(name) {
+  activate_wave(name);
+  for (var i = waves[name].length; i < wave_sizes[name]; ++i) {
     for (var j = 0; j < 13; ++j) {
       if (membership[hand[j]] == null) {
         move_card(j);
@@ -187,25 +187,25 @@ function move_all_cards() {
 }
 
 function undo_all_cards() {
-  for (var name in panel) {
-    clear_panel(name);
+  for (var name in waves) {
+    clear_wave(name);
   }
 }
 
-function clear_panel(name) {
-  for (var i = panel[name].length - 1; i >= 0; --i) {
+function clear_wave(name) {
+  for (var i = waves[name].length - 1; i >= 0; --i) {
     undo_card(name, i);
   }
-  redraw_panel(name);
+  redraw_wave(name);
 }
 
 function undo_card(name, index) {
-  if (panel[name].length <= index) {
-    redraw_panel(name);
+  if (waves[name].length <= index) {
+    redraw_wave(name);
     return;
   }
 
-  var card = panel[name][index];
+  var card = waves[name][index];
   for (var i = 0; i < 13; ++i) {
     if (hand[i] == card) {
       enable_card('', i);
@@ -213,51 +213,51 @@ function undo_card(name, index) {
       break;
     }
   }
-  panel[name].splice(index, 1);
-  redraw_panel(name);
+  waves[name].splice(index, 1);
+  redraw_wave(name);
 }
 
-function redraw_panel(name) {
-  for (var i = 0; i < panel[name].length; ++i) {
-    set_card(name + '_', i, panel[name][i]);
+function redraw_wave(name) {
+  for (var i = 0; i < waves[name].length; ++i) {
+    set_card(name + '_', i, waves[name][i]);
   }
-  for (var i = panel[name].length; i < panel_size[name]; ++i) {
+  for (var i = waves[name].length; i < wave_sizes[name]; ++i) {
     clear_card(name + '_', i);
   }
-  activate_panel(name);
+  activate_wave(name);
 
-  if (panel[name].length < panel_size[name]) {
+  if (waves[name].length < wave_sizes[name]) {
     set_inner_html(name + '_pattern', '&nbsp;');
-    panel_value[name] = 0;
+    wave_values[name] = 0;
   } else {
-    var eval = evaluate_panel(name);
+    var eval = evaluate_wave(name);
     set_inner_html(name + '_pattern', eval.pattern + ': ' + eval.value + '%');
-    panel_value[name] = eval.value;
+    wave_values[name] = eval.value;
   }
   var sum = 0;
-  for (var name in panel_value) {
-    sum += panel_value[name];
+  for (var name in wave_values) {
+    sum += wave_values[name];
   }
   set_inner_html('average', 'average: ' + Math.floor(sum / 3) + '%');
 }
 
-function set_card(panel, index, card) {
-  set_inner_html(panel + 'suit_' + index, suit_symbols[suit(card)]);
-  set_inner_html(panel + 'rank_' + index, rank_symbols[rank(card)]);
+function set_card(waves, index, card) {
+  set_inner_html(waves + 'suit_' + index, suit_symbols[suit(card)]);
+  set_inner_html(waves + 'rank_' + index, rank_symbols[rank(card)]);
 }
 
-function clear_card(panel, index) {
-  set_inner_html(panel + 'suit_' + index, '?');
-  set_inner_html(panel + 'rank_' + index, '?');
+function clear_card(waves, index) {
+  set_inner_html(waves + 'suit_' + index, '?');
+  set_inner_html(waves + 'rank_' + index, '?');
 }
 
-function enable_card(panel, index) {
-  var id = panel + 'card_' + index;
+function enable_card(waves, index) {
+  var id = waves + 'card_' + index;
   document.getElementById(id).style.backgroundColor = 'white';
 }
 
-function disable_card(panel, index) {
-  var id = panel + 'card_' + index;
+function disable_card(waves, index) {
+  var id = waves + 'card_' + index;
   document.getElementById(id).style.backgroundColor = 'lightgrey';
 }
 
@@ -265,17 +265,17 @@ function set_inner_html(id, value) {
   document.getElementById(id).innerHTML = value;
 }
 
-function save_layout() {
-  for (var name in panel) {
-    if (panel[name].length < panel_size[name]) {
+function save_waves() {
+  for (var name in waves) {
+    if (waves[name].length < wave_sizes[name]) {
       alert("Please finish all three waves before saving them.");
       return;
     }
   }
-  for (var number in saved_layouts) {
+  for (var number in saved_waves) {
     var duplicate = true;
     for (var card in membership) {
-      if (membership[card] != saved_layouts[number][card]) {
+      if (membership[card] != saved_waves[number][card]) {
         duplicate = false;
         break;
       }
@@ -284,32 +284,32 @@ function save_layout() {
       return;
     }
   }
-  var number = saved_layouts.length;
-  saved_layouts.push({});
+  var number = saved_waves.length;
+  saved_waves.push({});
   for (var card in membership) {
-    saved_layouts[number][card] = membership[card];
+    saved_waves[number][card] = membership[card];
   }
 
   var button = document.createElement('BUTTON');
   button.innerHTML = '#' + (number + 1);
   button.className = 'menu';
-  button.onclick = function() { load_layout(number) };
+  button.onclick = function() { load_waves(number) };
   document.getElementById('load').appendChild(button);
 }
 
-function load_layout(number) {
-  for (var card in saved_layouts[number]) {
-    membership[card] = saved_layouts[number][card];
+function load_waves(number) {
+  for (var card in saved_waves[number]) {
+    membership[card] = saved_waves[number][card];
   }
 
-  for (var name in panel) {
-    panel[name] = [];
+  for (var name in waves) {
+    waves[name] = [];
   }
   for (var card in membership) {
-    panel[membership[card]].push(card);
+    waves[membership[card]].push(card);
   }
-  for (var name in panel) {
-    sort_panel(name);
+  for (var name in waves) {
+    sort_wave(name);
   }
   redraw_hand();
 }
@@ -398,8 +398,8 @@ var quadruple_value = [
   [ 94, 94, 95, 95, 95, 96, 97, 97, 97, 97, 98, 98, 98]
 ];
 
-function evaluate_panel(name) {
-  var cards = panel[name];
+function evaluate_wave(name) {
+  var cards = waves[name];
   var junks = [];
   var pairs = [];
   var triples = [];
@@ -476,7 +476,7 @@ function evaluate_panel(name) {
 }
     </script>
   </head>
-  <body onload='deal_hand()'>
+  <body onload='deal_new_hand()'>
     <h1>十三水•Chinese Poker</h1>
     <hr/>
     <h2>AI</h2>
@@ -601,13 +601,13 @@ function evaluate_panel(name) {
           <h2>Player &nbsp; &nbsp;</h2>
         </td>
         <td>
-          <button class='menu' onclick='deal_hand()'>New deal</button>
+          <button class='menu' onclick='deal_new_hand()'>Deal new hand</button>
         </td>
         <td>
           &nbsp; &nbsp; &nbsp; &nbsp;
         </td>
         <td>
-          <button class='menu' onclick='save_layout()'>Save</button>
+          <button class='menu' onclick='save_waves()'>Save</button>
         </td>
         <td class='menu'>
           &nbsp; &nbsp; Load:
@@ -740,19 +740,19 @@ function evaluate_panel(name) {
       </tr>
       <tr>
         <td class='move'>
-          <button class='move' onclick='fill_panel("front")'>⇈</button>
+          <button class='move' onclick='fill_wave("front")'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_panel("front")'>⇊</button>
+          <button class='move' onclick='clear_wave("front")'>⇊</button>
         </td>
         <td class='move'>
-          <button class='move' onclick='fill_panel("center")'>⇈</button>
+          <button class='move' onclick='fill_wave("center")'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_panel("center")'>⇊</button>
+          <button class='move' onclick='clear_wave("center")'>⇊</button>
         </td>
         <td class='move'>
-          <button class='move' onclick='fill_panel("back")'>⇈</button>
+          <button class='move' onclick='fill_wave("back")'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_panel("back")'>⇊</button>
+          <button class='move' onclick='clear_wave("back")'>⇊</button>
         </td>
       </tr>
     </table>
