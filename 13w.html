@@ -59,6 +59,8 @@ var suit_symbols = [
 ];
 var rank_symbols = [
   '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A' ];
+var two = 0, three = 1, four = 2, five = 3, six = 4, seven = 5, eight = 6,
+    nine = 7, ten = 8, jack = 9, queen = 10, king = 11, ace = 12;
 
 var hand = [];
 var panel_size = { front: 3, center: 5, back: 5 };
@@ -153,7 +155,19 @@ function move_card(index) {
 }
 
 function sort_panel(name) {
-  panel[name].sort(function(a, b) { return rank(a) - rank(b); });
+  var cards = panel[name];
+  cards.sort(function(a, b) { return rank(a) - rank(b); });
+  // Special case for 2345A.
+  if (cards.length == 5 && rank(cards[0]) == two &&
+      rank(cards[1]) == three && rank(cards[2]) == four &&
+      rank(cards[3]) == five && rank(cards[4]) == ace) {
+    var temp = cards[4];
+    cards[4] = cards[3];
+    cards[3] = cards[2];
+    cards[2] = cards[1];
+    cards[1] = cards[0];
+    cards[0] = temp;
+  }
   redraw_panel(name);
 }
 
@@ -407,13 +421,9 @@ function evaluate_panel(name) {
       if (suit(cards[i]) != suit(cards[i + 1])) {
         flush = false;
       }
-      if (rank(cards[i]) + 1 != rank(cards[i + 1])) {
-        if (straight == true && i == cards.length - 2 &&
-            rank(cards[i + 1]) == 12 && rank(cards[0]) == 0) {
-          straight = true;
-        } else {
-          straight = false;
-        }
+      if (rank(cards[i]) + 1 != rank(cards[i + 1]) &&
+          !(i == 0 && rank(cards[0]) == ace && rank(cards[1]) == two)) {
+        straight = false;
       }
     }
   }
@@ -434,10 +444,6 @@ function evaluate_panel(name) {
     }
     return { pattern:'flush', value:flush_value[wave][rank1] };
   } else if (straight) {
-    // Special case for 2345A
-    if (rank1 == 12 && rank(cards[0]) == 0) {
-      rank1 = rank(cards[cards.length - 2]);
-    }
     return { pattern:'straight', value:straight_value[wave][rank1] };
   } else if (triples.length > 0) {
     return { pattern:'triple', value:triple_value[wave][triples[0]] };
