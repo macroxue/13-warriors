@@ -271,7 +271,7 @@ function set_inner_html(id, value) {
 function save_waves() {
   for (var name in waves) {
     if (waves[name].length < wave_sizes[name]) {
-      alert("Please finish all three waves before saving them.");
+      alert('Please finish all three waves before saving them.');
       return;
     }
   }
@@ -284,6 +284,7 @@ function save_waves() {
       }
     }
     if (duplicate) {
+      alert('Waves already saved as #' + (Number(number) + 1));
       return;
     }
   }
@@ -294,7 +295,7 @@ function save_waves() {
   }
 
   var button = document.createElement('BUTTON');
-  button.innerHTML = '#' + (number + 1);
+  button.innerHTML = '#' + Math.floor(number + 1);
   button.className = 'menu';
   button.onclick = function() { load_waves(number) };
   document.getElementById('load').appendChild(button);
