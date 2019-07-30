@@ -17,9 +17,6 @@ td.menu {
 button.menu {
   font-size: 20px;
 }
-button.sort {
-  font-size: 20px;
-}
 button.move {
   font-size: 30px;
 }
@@ -92,7 +89,7 @@ function deal_hand() {
     panel[name] = [];
     redraw_panel(name);
   }
-  activate_panel('front');
+  undo_all_cards();
   saved_layouts = [];
   set_inner_html('load', '');
 }
@@ -218,7 +215,6 @@ function undo_card(name, index) {
   }
   panel[name].splice(index, 1);
   redraw_panel(name);
-
 }
 
 function redraw_panel(name) {
@@ -726,6 +722,9 @@ function evaluate_panel(name) {
             </tr>
           </table>
         </td>
+        <td>
+          <button class='menu' onclick='undo_all_cards()'>Clear all</button>
+        </td>
       </tr>
       <tr>
         <td class='move'>
@@ -849,14 +848,14 @@ function evaluate_panel(name) {
           <table>
             <tr>
               <td>
-                <button class='sort' onclick='sort_by_rank()'>
+                <button class='menu' onclick='sort_by_rank()'>
                   Sort by rank
                 </button>
               </td>
             </tr>
             <tr>
               <td>
-                <button class='sort' onclick='sort_by_suit()'>
+                <button class='menu' onclick='sort_by_suit()'>
                   Sort by suit
                 </button>
               </td>
