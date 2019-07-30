@@ -272,6 +272,18 @@ function save_layout() {
       return;
     }
   }
+  for (var number in saved_layouts) {
+    var duplicate = true;
+    for (var card in membership) {
+      if (membership[card] != saved_layouts[number][card]) {
+        duplicate = false;
+        break;
+      }
+    }
+    if (duplicate) {
+      return;
+    }
+  }
   var number = saved_layouts.length;
   saved_layouts.push({});
   for (var card in membership) {
