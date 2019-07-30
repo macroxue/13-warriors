@@ -60,6 +60,7 @@ var two = 0, three = 1, four = 2, five = 3, six = 4, seven = 5, eight = 6,
     nine = 7, ten = 8, jack = 9, queen = 10, king = 11, ace = 12;
 
 var hand = [];
+var sorted_by = '';
 var wave_sizes = { front: 3, center: 5, back: 5 };
 var wave_values = { front: 0, center: 0, back: 0 };
 var waves = { front: [], center: [], back: [] };
@@ -83,8 +84,7 @@ function deal_new_hand() {
   }
 
   membership = {};
-  sort_by_suit();
-  redraw_hand();
+  sort_hand();
   for (var name in waves) {
     waves[name] = [];
     redraw_wave(name);
@@ -94,15 +94,18 @@ function deal_new_hand() {
   set_inner_html('load', '');
 }
 
-function sort_by_rank() {
-  hand.sort(function(a, b) { return rank(a) - rank(b); });
-  redraw_hand();
-}
-
-function sort_by_suit() {
-  hand.sort(function(a, b) {
-    return suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b);
-  });
+function sort_hand() {
+  if (sorted_by == 'suit') {
+    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    sorted_by = 'rank';
+    set_inner_html('sort', 'Sort by suit');
+  } else {
+    hand.sort(function(a, b) {
+      return suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b);
+    });
+    sorted_by = 'suit';
+    set_inner_html('sort', 'Sort by rank');
+  }
   redraw_hand();
 }
 
@@ -857,22 +860,7 @@ function evaluate_wave(name) {
           </table>
         </td>
         <td>
-          <table>
-            <tr>
-              <td>
-                <button class='menu' onclick='sort_by_rank()'>
-                  Sort by rank
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <button class='menu' onclick='sort_by_suit()'>
-                  Sort by suit
-                </button>
-              </td>
-            </tr>
-          </table>
+          <button class='menu' id='sort' onclick='sort_hand()'></button>
         </td>
       </tr>
     </table>
