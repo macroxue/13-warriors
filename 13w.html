@@ -503,6 +503,7 @@ function evaluate_wave(name) {
   return { pattern: Junk, high: rank1, value: junk_value[wave][rank1] };
 }
 
+var max_value = 0;
 var max_waves = { front: [], center: [], back: [] };
 
 function optimize_waves() {
@@ -512,22 +513,8 @@ function optimize_waves() {
     sort_hand();
   }
 
-  var max_value = 0;
-  for (var b1 = 0; b1 < 9; ++b1) {
-    for (var b2 = b1 + 1; b2 < 10; ++b2) {
-      for (var b3 = b2 + 1; b3 < 11; ++b3) {
-        for (var b4 = b3 + 1; b4 < 12; ++b4) {
-          for (var b5 = b4 + 1; b5 < 13; ++b5) {
-            waves['back'] = [hand[b1], hand[b2], hand[b3], hand[b4], hand[b5]];
-            sort_special_straight(waves['back']);
-            var back_eval = evaluate_wave('back');
-            var bits = (1<<b1) + (1<<b2) + (1<<b3) + (1<<b4) + (1<<b5);
-            max_value = optimize_center(back_eval, bits, max_value);
-          }
-        }
-      }
-    }
-  }
+  max_value = 0;
+  optimize_back();
 
   for (var name in max_waves) {
     waves[name] = [];
@@ -540,7 +527,29 @@ function optimize_waves() {
   redraw_hand();
 }
 
-function optimize_center(back_eval, bits, max_value) {
+function optimize_back() {
+  for (var b1 = 0; b1 < 9; ++b1) {
+    for (var b2 = b1 + 1; b2 < 10; ++b2) {
+      for (var b3 = b2 + 1; b3 < 11; ++b3) {
+        for (var b4 = b3 + 1; b4 < 12; ++b4) {
+          for (var b5 = b4 + 1; b5 < 13; ++b5) {
+            waves['back'] = [hand[b1], hand[b2], hand[b3], hand[b4], hand[b5]];
+            sort_special_straight(waves['back']);
+            var back_eval = evaluate_wave('back');
+            if (back_eval.pattern == Junk) continue;
+            if (200 + back_eval.value < max_value) continue;
+
+            var bits = (1<<b1) + (1<<b2) + (1<<b3) + (1<<b4) + (1<<b5);
+            optimize_center(back_eval, bits);
+          }
+        }
+      }
+    }
+  }
+}
+
+function optimize_center(back_eval, bits) {
+  out:
   for (var c1 = 0; c1 < 9; ++c1) {
     if ((1 << c1) & bits) continue;
     for (var c2 = c1 + 1; c2 < 10; ++c2) {
@@ -555,22 +564,22 @@ function optimize_center(back_eval, bits, max_value) {
             waves['center'] = [hand[c1], hand[c2], hand[c3], hand[c4], hand[c5]];
             sort_special_straight(waves['center']);
             var center_eval = evaluate_wave('center');
-            if (center_eval.pattern > back_eval.pattern) continue;
+            if (center_eval.pattern > back_eval.pattern) break out;
             if (center_eval.pattern == back_eval.pattern &&
-                center_eval.high > back_eval.high) continue;
+                center_eval.high > back_eval.high) break out;
+            if (100 + center_eval.value + back_eval.value < max_value) continue;
 
             var center_bits = (1<<c1) + (1<<c2) + (1<<c3) + (1<<c4) + (1<<c5);
-            max_value = optimize_front(center_eval, back_eval,
-                                       bits + center_bits, max_value);
+            optimize_front(center_eval, back_eval, bits + center_bits);
           }
         }
       }
     }
   }
-  return max_value;
 }
 
-function optimize_front(center_eval, back_eval, bits, max_value) {
+function optimize_front(center_eval, back_eval, bits) {
+  out:
   for (var f1 = 0; f1 < 11; ++f1) {
     if ((1 << f1) & bits) continue;
     for (var f2 = f1 + 1; f2 < 12; ++f2) {
@@ -580,12 +589,12 @@ function optimize_front(center_eval, back_eval, bits, max_value) {
 
         waves['front'] = [hand[f1], hand[f2], hand[f3]];
         var front_eval = evaluate_wave('front');
-        if (front_eval.pattern > center_eval.pattern) continue;
+        if (front_eval.pattern > center_eval.pattern) break out;
         if (front_eval.pattern == center_eval.pattern &&
-            front_eval.high > center_eval.high) continue;
+            front_eval.high > center_eval.high) break out;
 
         var sum_value = front_eval.value + center_eval.value + back_eval.value;
-        if (sum_value > max_value) {
+        if (max_value < sum_value) {
           max_value = sum_value;
           for (var name in waves) {
             max_waves[name] = [];
@@ -597,7 +606,6 @@ function optimize_front(center_eval, back_eval, bits, max_value) {
       }
     }
   }
-  return max_value;
 }
     </script>
   </head>
