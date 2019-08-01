@@ -66,6 +66,8 @@ var pattern_symbols = [
 var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4,
     Flush = 5, FullHouse = 6, Quadruple = 7, StraightFlush = 8;
 
+var Front = 0, Center = 1, Back = 2;
+
 var hand = [];
 var sorted_by = '';
 var wave_sizes = { front: 3, center: 5, back: 5 };
@@ -246,7 +248,8 @@ function redraw_wave(name) {
     set_inner_html(name + '_pattern', '&nbsp;');
     wave_values[name] = 0;
   } else {
-    var eval = evaluate_wave(name);
+    var wave = name == 'front' ? Front : name == 'center' ? Center : Back;
+    var eval = evaluate_wave(waves[name], wave);
     set_inner_html(name + '_pattern',
                    pattern_symbols[eval.pattern] + ': ' + eval.value + '%');
     wave_values[name] = eval.value;
@@ -416,8 +419,7 @@ var quadruple_value = [
   [ 94, 94, 95, 95, 95, 96, 97, 97, 97, 97, 98, 98, 98]
 ];
 
-function evaluate_wave(name) {
-  var cards = waves[name];
+function evaluate_wave(cards, wave) {
   var junks = [];
   var pairs = [];
   var triples = [];
@@ -454,7 +456,6 @@ function evaluate_wave(name) {
     }
   }
 
-  var wave = name == 'front' ? 0 : name == 'center' ? 1 : 2;
   var rank1 = rank(cards[cards.length - 1]);
   var rank2 = rank(cards[cards.length - 2]);
 
@@ -503,109 +504,118 @@ function evaluate_wave(name) {
   return { pattern: Junk, high: rank1, value: junk_value[wave][rank1] };
 }
 
-var max_value = 0;
-var max_waves = { front: [], center: [], back: [] };
-
-function optimize_waves() {
-  undo_all_cards();
-
-  if (sorted_by != 'rank') {
-    sort_hand();
+class Optimizer {
+  constructor(hand) {
+    this.hand = hand;
+    this.front = [];
+    this.center = [];
+    this.back = [];
+    this.max_value = 0;
+    this.max_waves = [];
   }
 
-  max_value = 0;
-  optimize_back();
-
-  for (var name in max_waves) {
-    waves[name] = [];
-    for (var index in max_waves[name]) {
-      waves[name].push(max_waves[name][index]);
-      membership[max_waves[name][index]] = name;
-    }
-    redraw_wave(name);
+  optimize_waves() {
+    this.hand.sort(function(a, b) { return rank(a) - rank(b); });
+    this.max_value = 0;
+    this.optimize_back();
   }
-  redraw_hand();
-}
 
-function optimize_back() {
-  for (var b1 = 0; b1 < 9; ++b1) {
-    for (var b2 = b1 + 1; b2 < 10; ++b2) {
-      for (var b3 = b2 + 1; b3 < 11; ++b3) {
-        for (var b4 = b3 + 1; b4 < 12; ++b4) {
-          for (var b5 = b4 + 1; b5 < 13; ++b5) {
-            waves['back'] = [hand[b1], hand[b2], hand[b3], hand[b4], hand[b5]];
-            sort_special_straight(waves['back']);
-            var back_eval = evaluate_wave('back');
-            if (back_eval.pattern == Junk) continue;
-            if (200 + back_eval.value < max_value) continue;
+  optimize_back() {
+    for (var b1 = 0; b1 < 9; ++b1) {
+      for (var b2 = b1 + 1; b2 < 10; ++b2) {
+        for (var b3 = b2 + 1; b3 < 11; ++b3) {
+          for (var b4 = b3 + 1; b4 < 12; ++b4) {
+            for (var b5 = b4 + 1; b5 < 13; ++b5) {
+              this.back = [hand[b1], hand[b2], hand[b3], hand[b4], hand[b5]];
+              sort_special_straight(this.back);
+              var back_eval = evaluate_wave(this.back, Back);
+              if (back_eval.pattern == Junk) continue;
+              if (200 + back_eval.value < this.max_value) continue;
 
-            var bits = (1<<b1) + (1<<b2) + (1<<b3) + (1<<b4) + (1<<b5);
-            optimize_center(back_eval, bits);
-          }
-        }
-      }
-    }
-  }
-}
-
-function optimize_center(back_eval, bits) {
-  out:
-  for (var c1 = 0; c1 < 9; ++c1) {
-    if ((1 << c1) & bits) continue;
-    for (var c2 = c1 + 1; c2 < 10; ++c2) {
-      if ((1 << c2) & bits) continue;
-      for (var c3 = c2 + 1; c3 < 11; ++c3) {
-        if ((1 << c3) & bits) continue;
-        for (var c4 = c3 + 1; c4 < 12; ++c4) {
-          if ((1 << c4) & bits) continue;
-          for (var c5 = c4 + 1; c5 < 13; ++c5) {
-            if ((1 << c5) & bits) continue;
-
-            waves['center'] = [hand[c1], hand[c2], hand[c3], hand[c4], hand[c5]];
-            sort_special_straight(waves['center']);
-            var center_eval = evaluate_wave('center');
-            if (center_eval.pattern > back_eval.pattern) break out;
-            if (center_eval.pattern == back_eval.pattern &&
-                center_eval.high > back_eval.high) break out;
-            if (100 + center_eval.value + back_eval.value < max_value) continue;
-
-            var center_bits = (1<<c1) + (1<<c2) + (1<<c3) + (1<<c4) + (1<<c5);
-            optimize_front(center_eval, back_eval, bits + center_bits);
-          }
-        }
-      }
-    }
-  }
-}
-
-function optimize_front(center_eval, back_eval, bits) {
-  out:
-  for (var f1 = 0; f1 < 11; ++f1) {
-    if ((1 << f1) & bits) continue;
-    for (var f2 = f1 + 1; f2 < 12; ++f2) {
-      if ((1 << f2) & bits) continue;
-      for (var f3 = f2 + 1; f3 < 13; ++f3) {
-        if ((1 << f3) & bits) continue;
-
-        waves['front'] = [hand[f1], hand[f2], hand[f3]];
-        var front_eval = evaluate_wave('front');
-        if (front_eval.pattern > center_eval.pattern) break out;
-        if (front_eval.pattern == center_eval.pattern &&
-            front_eval.high > center_eval.high) break out;
-
-        var sum_value = front_eval.value + center_eval.value + back_eval.value;
-        if (max_value < sum_value) {
-          max_value = sum_value;
-          for (var name in waves) {
-            max_waves[name] = [];
-            for (var index in waves[name]) {
-              max_waves[name].push(waves[name][index]);
+              var bits = (1<<b1) + (1<<b2) + (1<<b3) + (1<<b4) + (1<<b5);
+              this.optimize_center(back_eval, bits);
             }
           }
         }
       }
     }
   }
+
+  optimize_center(back_eval, bits) {
+    out:
+    for (var c1 = 0; c1 < 9; ++c1) {
+      if ((1 << c1) & bits) continue;
+      for (var c2 = c1 + 1; c2 < 10; ++c2) {
+        if ((1 << c2) & bits) continue;
+        for (var c3 = c2 + 1; c3 < 11; ++c3) {
+          if ((1 << c3) & bits) continue;
+          for (var c4 = c3 + 1; c4 < 12; ++c4) {
+            if ((1 << c4) & bits) continue;
+            for (var c5 = c4 + 1; c5 < 13; ++c5) {
+              if ((1 << c5) & bits) continue;
+
+              this.center = [hand[c1], hand[c2], hand[c3], hand[c4], hand[c5]];
+              sort_special_straight(this.center);
+              var center_eval = evaluate_wave(this.center, Center);
+              if (center_eval.pattern > back_eval.pattern) break out;
+              if (center_eval.pattern == back_eval.pattern &&
+                  center_eval.high > back_eval.high) break out;
+              if (100 + center_eval.value + back_eval.value < this.max_value)
+                continue;
+
+              var center_bits = (1<<c1) + (1<<c2) + (1<<c3) + (1<<c4) + (1<<c5);
+              this.optimize_front(center_eval, back_eval, bits + center_bits);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  optimize_front(center_eval, back_eval, bits) {
+    out:
+    for (var f1 = 0; f1 < 11; ++f1) {
+      if ((1 << f1) & bits) continue;
+      for (var f2 = f1 + 1; f2 < 12; ++f2) {
+        if ((1 << f2) & bits) continue;
+        for (var f3 = f2 + 1; f3 < 13; ++f3) {
+          if ((1 << f3) & bits) continue;
+
+          this.front = [hand[f1], hand[f2], hand[f3]];
+          var front_eval = evaluate_wave(this.front, Front);
+          if (front_eval.pattern > center_eval.pattern) break out;
+          if (front_eval.pattern == center_eval.pattern &&
+              front_eval.high > center_eval.high) break out;
+
+          var sum_value = front_eval.value + center_eval.value + back_eval.value;
+          if (this.max_value < sum_value) {
+            this.max_value = sum_value;
+            this.max_waves = [].concat(this.front, this.center, this.back);
+          }
+        }
+      }
+    }
+  }
+
+  get waves() {
+    return this.max_waves;
+  }
+};
+
+function optimize_player_hand() {
+  var optimizer = new Optimizer(hand);
+  optimizer.optimize_waves();
+  var max_waves = optimizer.waves;
+  waves['front'] = max_waves.slice(0, 3);
+  waves['center'] = max_waves.slice(3, 8);
+  waves['back'] = max_waves.slice(8, 13);
+  for (var name in waves) {
+    for (var index in waves[name]) {
+      membership[waves[name][index]] = name;
+    }
+    redraw_wave(name);
+  }
+  redraw_hand();
 }
     </script>
   </head>
@@ -738,7 +748,7 @@ function optimize_front(center_eval, back_eval, bits) {
           &nbsp; &nbsp;
         </td>
         <td>
-          <button class='menu' onclick='optimize_waves()'>Optimize</button>
+          <button class='menu' onclick='optimize_player_hand()'>Optimize</button>
           &nbsp; &nbsp;
         </td>
         <td>
