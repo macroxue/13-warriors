@@ -71,7 +71,7 @@ var Front = 0, Center = 1, Back = 2;
 
 var ai_total_points = 0, total_points = 0;
 var ai_hand = [], hand = [];
-var sorted_by = '';
+var sorted_by_rank = false;
 var wave_sizes = [ 3, 5, 5 ];
 var wave_values = [ 0, 0, 0 ];
 var waves = [ [], [], [] ];
@@ -102,7 +102,7 @@ function deal_hand() {
   }
 
   hand = deck.slice(13, 26);
-  sort_hand();
+  sort_hand(false);
   membership = {};
   for (var wave in waves) {
     waves[wave] = [];
@@ -116,18 +116,16 @@ function deal_hand() {
   document.getElementById('load').style.visibility = 'hidden';
 }
 
-function sort_hand() {
-  if (sorted_by == 'suit') {
+function sort_hand(toggle) {
+  if (toggle) sorted_by_rank = !sorted_by_rank;
+  if (sorted_by_rank) {
     hand.sort(function(a, b) { return rank(a) - rank(b); });
-    sorted_by = 'rank';
-    set_inner_html('sort', 'Sort by suit');
   } else {
     hand.sort(function(a, b) {
       return suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b);
     });
-    sorted_by = 'suit';
-    set_inner_html('sort', 'Sort by rank');
   }
+  set_inner_html('sort', sorted_by_rank ? 'Sort by suit' : 'Sort by rank');
   redraw_hand();
 }
 
@@ -239,7 +237,7 @@ function redraw_wave(wave) {
     waves[wave] = eval.wave;
   }
   var sum = wave_values.reduce((a, b) => a + b, 0);
-  set_inner_html('average', sum ? 'average: ' + Math.floor(sum / 3) + '%' : '');
+  set_inner_html('average', sum ? Math.floor(sum / 3) + '%' : '');
 
   for (var i = 0; i < wave_sizes[wave]; ++i) {
     if (i < waves[wave].length)
@@ -600,7 +598,7 @@ class WaveEvaluator {
 
 class HandOptimizer {
   constructor(hand) {
-    this.hand = hand;
+    this.hand = hand.slice(0);
 
     this.optimize_waves();
   }
@@ -1090,7 +1088,7 @@ function optimize_hand() {
           </table>
         </td>
         <td>
-          <button class='menu' id='sort' onclick='sort_hand()'></button>
+          <button class='menu' id='sort' onclick='sort_hand(true)'></button>
         </td>
       </tr>
     </table>
