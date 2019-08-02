@@ -48,34 +48,35 @@ td.suit {
 }
     </style>
     <script>
-var suit_symbols = [
+var suit_names = [
   '<font color="black">♠</font>',
   '<font color="red">♥</font>',
   '<font color="black">♣</font>',
   '<font color="red">♦</font>',
 ];
-var rank_symbols = [
+var rank_names = [
   '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A' ];
 var Two = 0, Three = 1, Four = 2, Five = 3, Six = 4, Seven = 5, Eight = 6,
     Nine = 7, Ten = 8, Jack = 9, Queen = 10, King = 11, Ace = 12;
 
-var pattern_symbols = [
+var pattern_names = [
     'junk', 'pair', 'two pairs', 'triple', 'straight',
     'flush', 'full house', 'quadruple', 'straight flush'
 ];
 var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4,
     Flush = 5, FullHouse = 6, Quadruple = 7, StraightFlush = 8;
 
+var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
 
-var ai_hand = [], hand = [];
 var ai_total_points = 0, total_points = 0;
+var ai_hand = [], hand = [];
 var sorted_by = '';
-var wave_sizes = { front: 3, center: 5, back: 5 };
-var wave_values = { front: 0, center: 0, back: 0 };
-var waves = { front: [], center: [], back: [] };
+var wave_sizes = [ 3, 5, 5 ];
+var wave_values = [ 0, 0, 0 ];
+var waves = [ [], [], [] ];
 var membership = {};
-var active_wave = 'front';
+var active_wave = Front;
 var saved_waves = [];
 
 function suit(card) { return Math.floor(card / 13); }
@@ -94,18 +95,18 @@ function deal_hand() {
   }
 
   ai_hand = deck.slice(0, 13);
-  for (var name in waves) {
-    for (var index in waves[name]) {
-      clear_card('ai_' + name + '_', index, waves[name][index]);
+  for (var wave in waves) {
+    for (var card in waves[wave]) {
+      clear_card('ai_' + wave_names[wave] + '_', card, waves[wave][card]);
     }
   }
 
   hand = deck.slice(13, 26);
   sort_hand();
   membership = {};
-  for (var name in waves) {
-    waves[name] = [];
-    redraw_wave(name);
+  for (var wave in waves) {
+    waves[wave] = [];
+    redraw_wave(wave);
   }
   redraw_hand();
   saved_waves = [];
@@ -131,28 +132,28 @@ function sort_hand() {
 }
 
 function redraw_hand() {
-  for (var i = 0; i < 13; ++i) {
-    set_card('', i, hand[i]);
-    if (membership[hand[i]] == null) {
-      enable_card('', i);
+  for (var card in hand) {
+    set_card('', card, hand[card]);
+    if (membership[hand[card]] == null) {
+      enable_card('', card);
     } else {
-      disable_card('', i);
+      disable_card('', card);
     }
   }
 }
 
-function activate_wave(name) {
-  document.getElementById(active_wave).style.backgroundColor = 'green';
-  document.getElementById(name).style.backgroundColor = 'orange';
-  active_wave = name;
+function activate_wave(wave) {
+  set_background(wave_names[active_wave], 'green');
+  set_background(wave_names[wave], 'orange');
+  active_wave = wave;
 }
 
 function move_card(index) {
   var card = hand[index];
   if (membership[card] != null) {
-    var name = membership[card];
-    for (var i = 0; i < waves[name].length; ++i) {
-      if (waves[name][i] == card) {
+    var wave = membership[card];
+    for (var i in waves[wave]) {
+      if (waves[wave][i] == card) {
         undo_card(membership[card], i);
         break;
       }
@@ -163,47 +164,25 @@ function move_card(index) {
   disable_card('', index);
   membership[card] = active_wave;
   waves[active_wave].push(card);
-  sort_wave(active_wave);
+  waves[active_wave].sort(function(a, b) { return rank(a) - rank(b); });
+  redraw_wave(active_wave);
 
   if (waves[active_wave].length == wave_sizes[active_wave]) {
-    for (var name in waves) {
-      if (waves[name].length < wave_sizes[name]) {
-        activate_wave(name);
+    for (var wave in waves) {
+      if (waves[wave].length < wave_sizes[wave]) {
+        activate_wave(wave);
         break;
       }
     }
   }
 }
 
-// Special case for 2345A.
-function sort_special_straight(cards) {
-  if (rank(cards[0]) == Two &&
-      rank(cards[1]) == Three && rank(cards[2]) == Four &&
-      rank(cards[3]) == Five && rank(cards[4]) == Ace) {
-    var temp = cards[4];
-    cards[4] = cards[3];
-    cards[3] = cards[2];
-    cards[2] = cards[1];
-    cards[1] = cards[0];
-    cards[0] = temp;
-  }
-}
-
-function sort_wave(name) {
-  var cards = waves[name];
-  cards.sort(function(a, b) { return rank(a) - rank(b); });
-  if (cards.length == 5) {
-    sort_special_straight(cards);
-  }
-  redraw_wave(name);
-}
-
-function fill_wave(name) {
-  activate_wave(name);
-  for (var i = waves[name].length; i < wave_sizes[name]; ++i) {
-    for (var j = 0; j < 13; ++j) {
-      if (membership[hand[j]] == null) {
-        move_card(j);
+function fill_wave(wave) {
+  activate_wave(wave);
+  for (var i = waves[wave].length; i < wave_sizes[wave]; ++i) {
+    for (var index in hand) {
+      if (membership[hand[index]] == null) {
+        move_card(index);
         break;
       }
     }
@@ -211,95 +190,97 @@ function fill_wave(name) {
 }
 
 function move_all_cards() {
-  for (var i = 0; i < 13; ++i) {
+  for (var index in hand) {
     move_card(i);
   }
 }
 
 function undo_all_cards() {
-  for (var name in waves) {
-    clear_wave(name);
+  for (var wave in waves) {
+    clear_wave(wave);
   }
 }
 
-function clear_wave(name) {
-  for (var i = waves[name].length - 1; i >= 0; --i) {
-    undo_card(name, i);
+function clear_wave(wave) {
+  for (var i = waves[wave].length - 1; i >= 0; --i) {
+    undo_card(wave, i);
   }
-  redraw_wave(name);
+  redraw_wave(wave);
 }
 
-function undo_card(name, index) {
-  if (waves[name].length <= index) {
-    redraw_wave(name);
+function undo_card(wave, index) {
+  if (waves[wave].length <= index) {
+    redraw_wave(wave);
     return;
   }
 
-  var card = waves[name][index];
-  for (var i = 0; i < 13; ++i) {
-    if (hand[i] == card) {
-      enable_card('', i);
-      delete membership[card];
+  for (var card in hand) {
+    if (hand[card] == waves[wave][index]) {
+      enable_card('', card);
+      delete membership[hand[card]];
       break;
     }
   }
-  waves[name].splice(index, 1);
-  redraw_wave(name);
+  waves[wave].splice(index, 1);
+  redraw_wave(wave);
 }
 
-function redraw_wave(name) {
-  for (var i = 0; i < waves[name].length; ++i) {
-    set_card(name + '_', i, waves[name][i]);
-  }
-  for (var i = waves[name].length; i < wave_sizes[name]; ++i) {
-    clear_card(name + '_', i);
-  }
-  activate_wave(name);
-
-  if (waves[name].length < wave_sizes[name]) {
+function redraw_wave(wave) {
+  var name = wave_names[wave];
+  if (waves[wave].length < wave_sizes[wave]) {
     set_inner_html(name + '_pattern', '&nbsp;');
-    wave_values[name] = 0;
+    wave_values[wave] = 0;
   } else {
-    var order = name == 'front' ? Front : name == 'center' ? Center : Back;
-    var wave = new WaveEvaluator(waves[name], order);
+    var eval = new WaveEvaluator(waves[wave], wave);
     set_inner_html(name + '_pattern',
-                   pattern_symbols[wave.pattern] + ': ' + wave.value + '%');
-    wave_values[name] = wave.value;
+                   pattern_names[eval.pattern] + ': ' + eval.value + '%');
+    wave_values[wave] = eval.value;
+    // The wave could be resorted.
+    waves[wave] = eval.wave;
   }
-  var sum = 0;
-  for (var name in wave_values) {
-    sum += wave_values[name];
-  }
+  var sum = wave_values.reduce((a, b) => a + b, 0);
   set_inner_html('average', sum ? 'average: ' + Math.floor(sum / 3) + '%' : '');
+
+  for (var i = 0; i < wave_sizes[wave]; ++i) {
+    if (i < waves[wave].length)
+      set_card(name + '_', i, waves[wave][i]);
+    else
+      clear_card(name + '_', i);
+  }
+  activate_wave(wave);
 }
 
-function set_card(waves, index, card) {
-  set_inner_html(waves + 'suit_' + index, suit_symbols[suit(card)]);
-  set_inner_html(waves + 'rank_' + index, rank_symbols[rank(card)]);
+function set_card(prefix, index, card) {
+  set_inner_html(prefix + 'suit_' + index, suit_names[suit(card)]);
+  set_inner_html(prefix + 'rank_' + index, rank_names[rank(card)]);
 }
 
-function clear_card(waves, index) {
-  set_inner_html(waves + 'suit_' + index, '?');
-  set_inner_html(waves + 'rank_' + index, '?');
+function clear_card(prefix, index) {
+  set_inner_html(prefix + 'suit_' + index, '?');
+  set_inner_html(prefix + 'rank_' + index, '?');
 }
 
-function enable_card(waves, index) {
-  var id = waves + 'card_' + index;
-  document.getElementById(id).style.backgroundColor = 'white';
+function enable_card(prefix, index) {
+  var id = prefix + 'card_' + index;
+  set_background(id, 'white');
 }
 
-function disable_card(waves, index) {
-  var id = waves + 'card_' + index;
-  document.getElementById(id).style.backgroundColor = 'lightgrey';
+function disable_card(prefix, index) {
+  var id = prefix + 'card_' + index;
+  set_background(id, 'lightgrey');
 }
 
 function set_inner_html(id, value) {
   document.getElementById(id).innerHTML = value;
 }
 
+function set_background(id, color) {
+  document.getElementById(id).style.backgroundColor = color;
+}
+
 function save_waves() {
-  for (var name in waves) {
-    if (waves[name].length < wave_sizes[name]) {
+  for (var wave in waves) {
+    if (waves[wave].length < wave_sizes[wave]) {
       alert('Please finish all three waves before saving them.');
       return;
     }
@@ -332,73 +313,64 @@ function save_waves() {
 }
 
 function load_waves(number) {
+  for (var wave in waves) {
+    waves[wave] = [];
+  }
   for (var card in saved_waves[number]) {
     membership[card] = saved_waves[number][card];
-  }
-
-  for (var name in waves) {
-    waves[name] = [];
-  }
-  for (var card in membership) {
     waves[membership[card]].push(card);
   }
-  for (var name in waves) {
-    sort_wave(name);
+  for (var wave in waves) {
+    redraw_wave(wave);
   }
   redraw_hand();
 }
 
 function show_hand() {
-  for (var name in waves) {
-    if (waves[name].length < wave_sizes[name]) {
+  for (var wave in waves) {
+    if (waves[wave].length < wave_sizes[wave]) {
       alert('Please finish all three waves before matching against AI.');
       return;
     }
   }
-  var front = new WaveEvaluator(waves['front'], Front);
-  var center = new WaveEvaluator(waves['center'], Center);
-  var back = new WaveEvaluator(waves['back'], Back);
-  if (center.is_smaller_than(front)) {
-         console.log(front);
-         console.log(center);
+  var eval = [new WaveEvaluator(waves[Front], Front),
+              new WaveEvaluator(waves[Center], Center),
+              new WaveEvaluator(waves[Back], Back)];
+  if (eval[Center].is_smaller_than(eval[Front])) {
     alert('The center wave should not be smaller than the front wave.');
     return;
   }
-  if (back.is_smaller_than(center)) {
+  if (eval[Back].is_smaller_than(eval[Center])) {
     alert('The back wave should not be smaller than the center wave.');
     return;
   }
 
-  var ai_max_waves = (new HandOptimizer(ai_hand)).waves;
-  var ai_waves = {}, ai_wave_values = {};
-  ai_waves['front'] = ai_max_waves.slice(0, 3);
-  ai_waves['center'] = ai_max_waves.slice(3, 8);
-  ai_waves['back'] = ai_max_waves.slice(8, 13);
+  var ai_waves = (new HandOptimizer(ai_hand)).waves;
+  var ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
+                 new WaveEvaluator(ai_waves[Center], Center),
+                 new WaveEvaluator(ai_waves[Back], Back)];
   var points = 0, ai_points = 0;
-  for (var name in ai_waves) {
-    for (var index in ai_waves[name]) {
-      set_card('ai_' + name + '_', index, ai_waves[name][index]);
+  for (var wave in ai_waves) {
+    for (var card in ai_waves[wave]) {
+      set_card('ai_' + wave_names[wave] + '_', card, ai_waves[wave][card]);
     }
-    var order = name == 'front' ? Front : name == 'center' ? Center : Back;
-    var wave = name == 'front' ? front : name == 'center' ? center : back;
-    var ai_wave = new WaveEvaluator(ai_waves[name], order);
     var result = '';
-    if (ai_wave.is_smaller_than(wave)) {
+    if (ai_eval[wave].is_smaller_than(eval[wave])) {
       points += 1;
       result = 'win';
-    } else if (wave.is_smaller_than(ai_wave)) {
+    } else if (eval[wave].is_smaller_than(ai_eval[wave])) {
       ai_points += 1;
       result = 'lose';
     } else {
       result = 'tie';
     }
-    set_inner_html(name + '_pattern', result);
+    set_inner_html(wave_names[wave] + '_pattern', result);
   }
   set_inner_html('average', '');
 
   // Double points for a sweeping win.
-  if (points == 0) ai_points *= 2;
-  if (ai_points == 0) points *= 2;
+  if (points == 3) points *= 2;
+  if (ai_points == 3) ai_points *= 2;
 
   set_inner_html('score', "You: " + total_points + ' +' + points);
   set_inner_html('ai_score', "AI: " + ai_total_points + ' +' + ai_points);
@@ -610,7 +582,7 @@ class WaveEvaluator {
   get wave() {
     // Special case for 2345A.
     if (this.pattern == Straight && this.rank == Five)
-      return this.cards.slice(4, 5) + this.cards.slice(0, 4);
+      return this.cards.slice(4, 5).concat(this.cards.slice(0, 4));
     return this.cards;
   }
 
@@ -714,20 +686,19 @@ class HandOptimizer {
   }
 
   get waves() {
-    return this.max_waves;
+    return [this.max_waves.slice(0, 3),
+            this.max_waves.slice(3, 8),
+            this.max_waves.slice(8, 13)];
   }
 };
 
 function optimize_hand() {
-  var max_waves = (new HandOptimizer(hand)).waves;
-  waves['front'] = max_waves.slice(0, 3);
-  waves['center'] = max_waves.slice(3, 8);
-  waves['back'] = max_waves.slice(8, 13);
-  for (var name in waves) {
-    for (var index in waves[name]) {
-      membership[waves[name][index]] = name;
+  waves = (new HandOptimizer(hand)).waves;
+  for (var wave in waves) {
+    for (var card in waves[wave]) {
+      membership[waves[wave][card]] = wave;
     }
-    redraw_wave(name);
+    redraw_wave(wave);
   }
   redraw_hand();
 }
@@ -891,21 +862,21 @@ function optimize_hand() {
           <table class='hand' id='front'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card("front", 0)'>
+                <table class='card' onclick='undo_card(Front, 0)'>
                   <tr><td class='rank' id='front_rank_0'>?</td></tr>
                   <tr><td class='suit' id='front_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("front", 1)'>
+                <table class='card' onclick='undo_card(Front, 1)'>
                   <tr><td class='rank' id='front_rank_1'>?</td></tr>
                   <tr><td class='suit' id='front_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("front", 2)'>
+                <table class='card' onclick='undo_card(Front, 2)'>
                   <tr><td class='rank' id='front_rank_2'>?</td></tr>
                   <tr><td class='suit' id='front_suit_2'>?</td></tr>
                   <tr><td></td></tr>
@@ -918,35 +889,35 @@ function optimize_hand() {
           <table class='hand' id='center'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card("center", 0)'>
+                <table class='card' onclick='undo_card(Center, 0)'>
                   <tr><td class='rank' id='center_rank_0'>?</td></tr>
                   <tr><td class='suit' id='center_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("center", 1)'>
+                <table class='card' onclick='undo_card(Center, 1)'>
                   <tr><td class='rank' id='center_rank_1'>?</td></tr>
                   <tr><td class='suit' id='center_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("center", 2)'>
+                <table class='card' onclick='undo_card(Center, 2)'>
                   <tr><td class='rank' id='center_rank_2'>?</td></tr>
                   <tr><td class='suit' id='center_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("center", 3)'>
+                <table class='card' onclick='undo_card(Center, 3)'>
                   <tr><td class='rank' id='center_rank_3'>?</td></tr>
                   <tr><td class='suit' id='center_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("center", 4)'>
+                <table class='card' onclick='undo_card(Center, 4)'>
                   <tr><td class='rank' id='center_rank_4'>?</td></tr>
                   <tr><td class='suit' id='center_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -959,35 +930,35 @@ function optimize_hand() {
           <table class='hand' id='back'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card("back", 0)'>
+                <table class='card' onclick='undo_card(Back, 0)'>
                   <tr><td class='rank' id='back_rank_0'>?</td></tr>
                   <tr><td class='suit' id='back_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("back", 1)'>
+                <table class='card' onclick='undo_card(Back, 1)'>
                   <tr><td class='rank' id='back_rank_1'>?</td></tr>
                   <tr><td class='suit' id='back_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("back", 2)'>
+                <table class='card' onclick='undo_card(Back, 2)'>
                   <tr><td class='rank' id='back_rank_2'>?</td></tr>
                   <tr><td class='suit' id='back_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("back", 3)'>
+                <table class='card' onclick='undo_card(Back, 3)'>
                   <tr><td class='rank' id='back_rank_3'>?</td></tr>
                   <tr><td class='suit' id='back_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card("back", 4)'>
+                <table class='card' onclick='undo_card(Back, 4)'>
                   <tr><td class='rank' id='back_rank_4'>?</td></tr>
                   <tr><td class='suit' id='back_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -1002,19 +973,19 @@ function optimize_hand() {
       </tr>
       <tr>
         <td class='move'>
-          <button class='move' onclick='fill_wave("front")'>⇈</button>
+          <button class='move' onclick='fill_wave(Front)'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_wave("front")'>⇊</button>
+          <button class='move' onclick='clear_wave(Front)'>⇊</button>
         </td>
         <td class='move'>
-          <button class='move' onclick='fill_wave("center")'>⇈</button>
+          <button class='move' onclick='fill_wave(Center)'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_wave("center")'>⇊</button>
+          <button class='move' onclick='clear_wave(Center)'>⇊</button>
         </td>
         <td class='move'>
-          <button class='move' onclick='fill_wave("back")'>⇈</button>
+          <button class='move' onclick='fill_wave(Back)'>⇈</button>
           &nbsp; &nbsp;
-          <button class='move' onclick='clear_wave("back")'>⇊</button>
+          <button class='move' onclick='clear_wave(Back)'>⇊</button>
         </td>
       </tr>
     </table>
