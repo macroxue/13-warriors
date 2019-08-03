@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-    <title>十三水•Chinese Poker</title>
+    <title>Chinese Poker•十三水</title>
     <style>
 h1 {
   color: brown;
@@ -10,20 +10,39 @@ h1 {
 h2 {
   color: brown;
   font-size: 30px;
+  margin: auto;
 }
-td.menu {
+tr.menu {
   font-size: 20px;
 }
 button.menu {
   font-size: 20px;
+  opacity: 0.8;
+  padding: 0px 0px;
+  width: 80px;
 }
 button.move {
   font-size: 30px;
+  opacity: 0.8;
+  padding: 0px 0px;
+  width: 60px;
 }
-td.move {
+button.load {
+  font-size: 20px;
+  opacity: 0.8;
+  padding: 0px 0px;
+  width: 40px;
+}
+button:hover {
+  opacity: 1;
+}
+tr.move {
   text-align: center;
 }
-td.pattern {
+tr.menu {
+  text-align: center;
+}
+tr.pattern {
   color: darkblue;
   font-size: 20px;
   text-align: center;
@@ -110,7 +129,7 @@ function deal_hand() {
   }
   redraw_hand();
   saved_waves = [];
-  set_inner_html('load_area', '');
+  set_inner_html('load', '&nbsp;Load: ');
   document.getElementById('deal').style.display = 'none'
   document.getElementById('show').style.display = 'inline'
   document.getElementById('load').style.visibility = 'hidden';
@@ -125,7 +144,7 @@ function sort_hand(toggle) {
       return suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b);
     });
   }
-  set_inner_html('sort', sorted_by_rank ? 'Sort by suit' : 'Sort by rank');
+  // set_inner_html('sort', sorted_by_rank ? 'Sort by suit' : 'Sort by rank');
   redraw_hand();
 }
 
@@ -303,11 +322,11 @@ function save_waves() {
   }
 
   var button = document.createElement('BUTTON');
-  button.innerHTML = '#' + Math.floor(number + 1);
-  button.className = 'menu';
+  button.innerHTML = Math.floor(number + 1);
+  button.className = 'load';
   button.onclick = function() { load_waves(number) };
   document.getElementById('load').style.visibility = 'visible';
-  document.getElementById('load_area').appendChild(button);
+  document.getElementById('load').appendChild(button);
 }
 
 function load_waves(number) {
@@ -370,10 +389,9 @@ function show_hand() {
   if (points == 3) points *= 2;
   if (ai_points == 3) ai_points *= 2;
 
-  set_inner_html('score', "You: " + total_points + ' +' + points);
-  set_inner_html('ai_score', "AI: " + ai_total_points + ' +' + ai_points);
   total_points += points;
   ai_total_points += ai_points;
+  set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
 
   document.getElementById('deal').style.display = 'inline'
   document.getElementById('show').style.display = 'none'
@@ -703,9 +721,8 @@ function optimize_hand() {
     </script>
   </head>
   <body onload='deal_hand()'>
-    <h1>十三水•Chinese Poker</h1>
+    <h1>Chinese Poker•十三水</h1>
     <hr/>
-    <h2 id='ai_score'>AI: 0</h2>
     <table>
       <tr>
         <td>
@@ -818,42 +835,24 @@ function optimize_hand() {
           </table>
         </td>
       </tr>
-    </table>
-    <hr/>
-
-    <table>
-      <tr>
+      <tr class='menu'>
         <td>
-          <h2 id='score'>You: 0</h2>
+          <button class='menu' id='deal' onclick='deal_hand()'>Deal</button>
+          <button class='menu' id='show' onclick='show_hand()'>Show</button>
         </td>
         <td>
-          &nbsp; &nbsp; &nbsp; &nbsp;
-          <button class='menu' id='deal' onclick='deal_hand()'>Deal hand</button>
-          <button class='menu' id='show' onclick='show_hand()'>Show hand</button>
+          <h2 id='score'>You 0-0 AI</h2>
         </td>
-        <td>
-          &nbsp; &nbsp; &nbsp; &nbsp;
-          <button class='menu' onclick='optimize_hand()'>Optimize</button>
-        </td>
-        <td>
-          &nbsp; &nbsp; &nbsp; &nbsp;
+        <td id='save'>
           <button class='menu' onclick='save_waves()'>Save</button>
-        </td>
-        <td class='menu' id='load'>
-          &nbsp; &nbsp;
-          Load:
-        </td>
-        <td id='load_area'>
+          <b class='menu' id='load'></b>
         </td>
       </tr>
-    </table>
-
-    <table>
-      <tr>
-        <td class='pattern' id='front_pattern'>&nbsp;</td>
-        <td class='pattern' id='center_pattern'>&nbsp;</td>
-        <td class='pattern' id='back_pattern'>&nbsp;</td>
-        <td class='pattern' id='average'>&nbsp;</td>
+      <tr class='pattern'>
+        <td id='front_pattern'></td>
+        <td id='center_pattern'></td>
+        <td id='back_pattern'></td>
+        <td id='average'></td>
       </tr>
       <tr>
         <td>
@@ -966,21 +965,23 @@ function optimize_hand() {
           </table>
         </td>
         <td>
-          <button class='menu' onclick='undo_all_cards()'>Clear all</button>
+          <button class='menu' onclick='optimize_hand()'>Auto</button>
+          <hr/>
+          <button class='menu' onclick='undo_all_cards()'>Clear</button>
         </td>
       </tr>
-      <tr>
-        <td class='move'>
+      <tr class='move'>
+        <td>
           <button class='move' onclick='fill_wave(Front)'>⇈</button>
           &nbsp; &nbsp;
           <button class='move' onclick='clear_wave(Front)'>⇊</button>
         </td>
-        <td class='move'>
+        <td>
           <button class='move' onclick='fill_wave(Center)'>⇈</button>
           &nbsp; &nbsp;
           <button class='move' onclick='clear_wave(Center)'>⇊</button>
         </td>
-        <td class='move'>
+        <td>
           <button class='move' onclick='fill_wave(Back)'>⇈</button>
           &nbsp; &nbsp;
           <button class='move' onclick='clear_wave(Back)'>⇊</button>
@@ -1088,10 +1089,9 @@ function optimize_hand() {
           </table>
         </td>
         <td>
-          <button class='menu' id='sort' onclick='sort_hand(true)'></button>
+          <button class='menu' id='sort' onclick='sort_hand(true)'>Sort</button>
         </td>
       </tr>
     </table>
-    <hr/>
   </body>
 </html>
