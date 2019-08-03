@@ -11,9 +11,7 @@ h2 {
   color: brown;
   font-size: 30px;
   margin: auto;
-}
-tr.menu {
-  font-size: 20px;
+  text-align: center;
 }
 button.menu {
   font-size: 20px;
@@ -40,6 +38,14 @@ tr.move {
   text-align: center;
 }
 tr.menu {
+  font-size: 20px;
+  text-align: center;
+}
+td.menu {
+  font-size: 20px;
+}
+select.menu {
+  font-size: 20px;
   text-align: center;
 }
 tr.pattern {
@@ -88,6 +94,7 @@ var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4,
 var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
 
+var ai_handicap = 0;
 var ai_total_points = 0, total_points = 0;
 var ai_hand = [], hand = [];
 var sorted_by_rank = false;
@@ -119,6 +126,7 @@ function deal_hand() {
       clear_card('ai_' + wave_names[wave] + '_', card, waves[wave][card]);
     }
   }
+  select_level();
 
   hand = deck.slice(13, 26);
   sort_hand(false);
@@ -343,6 +351,10 @@ function load_waves(number) {
   redraw_hand();
 }
 
+function select_level() {
+  ai_handicap = document.getElementById('handicap').value;
+}
+
 function show_hand() {
   for (var wave in waves) {
     if (waves[wave].length < wave_sizes[wave]) {
@@ -362,7 +374,7 @@ function show_hand() {
     return;
   }
 
-  var ai_waves = (new HandOptimizer(ai_hand)).waves;
+  var ai_waves = (new HandOptimizer(ai_hand, ai_handicap)).waves;
   var ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
                  new WaveEvaluator(ai_waves[Center], Center),
                  new WaveEvaluator(ai_waves[Back], Back)];
@@ -615,10 +627,14 @@ class WaveEvaluator {
 };
 
 class HandOptimizer {
-  constructor(hand) {
+  constructor(hand, handicap = 0) {
     this.hand = hand.slice(0);
 
+    this.all_waves = [];
     this.optimize_waves();
+
+    var index = Math.max(this.all_waves.length - 1 - handicap, 0);
+    this.max_waves = this.all_waves[index];
   }
 
   optimize_waves() {
@@ -693,8 +709,8 @@ class HandOptimizer {
           var sum_value = this.front.value + this.center.value + this.back.value;
           if (this.max_value < sum_value) {
             this.max_value = sum_value;
-            this.max_waves = [].concat(this.front.wave, this.center.wave,
-                                       this.back.wave);
+            this.all_waves.push([].concat(this.front.wave, this.center.wave,
+                                          this.back.wave));
           }
         }
       }
@@ -833,6 +849,15 @@ function optimize_hand() {
               </td>
             </tr>
           </table>
+        </td>
+        <td class='menu'>
+          <b>Level:</b><br/>
+          <select class='menu' id='handicap' onchange='select_level()'>
+            <option value='3'>Jack</option>
+            <option value='2'>Queen</option>
+            <option value='1'>King</option>
+            <option value='0'>Ace</option>
+          </select>
         </td>
       </tr>
       <tr class='menu'>
