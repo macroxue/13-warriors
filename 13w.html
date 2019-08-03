@@ -126,9 +126,9 @@ function deal_hand() {
   }
 
   ai_hand = deck.slice(0, 13);
-  for (var wave in waves) {
-    for (var card in waves[wave]) {
-      clear_card('ai_' + wave_names[wave] + '_', card, waves[wave][card]);
+  for (var wave in wave_names) {
+    for (var i = 0; i < wave_sizes[wave]; ++i) {
+      clear_card('ai_' + wave_names[wave] + '_', i);
     }
   }
   select_level();
