@@ -99,6 +99,13 @@ var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4,
 var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
 
+var pattern_points = [
+  //        Tr       FH Qu SF
+  [1, 1, 1, 3, 1, 1, 1, 1, 1],   // front
+  [1, 1, 1, 1, 1, 1, 2, 8, 10],  // center
+  [1, 1, 1, 1, 1, 1, 1, 4, 5],   // back
+];
+
 var ai_handicap = 0;
 var ai_total_points = 0, total_points = 0;
 var ai_hand = [], hand = [];
@@ -384,27 +391,32 @@ function show_hand() {
                  new WaveEvaluator(ai_waves[Center], Center),
                  new WaveEvaluator(ai_waves[Back], Back)];
   var points = 0, ai_points = 0;
+  var wins = 0, ai_wins = 0;
   for (var wave in ai_waves) {
     for (var card in ai_waves[wave]) {
       set_card('ai_' + wave_names[wave] + '_', card, ai_waves[wave][card]);
     }
     var result = '';
     if (ai_eval[wave].is_smaller_than(eval[wave])) {
-      points += 1;
-      result = 'win';
+      var p = pattern_points[wave][eval[wave].pattern];
+      points += p;
+      result = '+' + p;
+      ++wins;
     } else if (eval[wave].is_smaller_than(ai_eval[wave])) {
-      ai_points += 1;
-      result = 'lose';
+      var p = pattern_points[wave][ai_eval[wave].pattern];
+      ai_points += p;
+      result = '-' + p;
+      ++ai_wins;
     } else {
-      result = 'tie';
+      result = '0';
     }
     set_inner_html(wave_names[wave] + '_pattern', result);
   }
-  set_inner_html('average', '');
 
   // Double points for a sweeping win.
-  if (points == 3) points *= 2;
-  if (ai_points == 3) ai_points *= 2;
+  if (wins == 3) points *= 2;
+  else if (ai_wins == 3) ai_points *= 2;
+  set_inner_html('average', (wins == 3 || ai_wins == 3) ? 'x2' : 'x1');
 
   total_points += points;
   ai_total_points += ai_points;
@@ -855,7 +867,7 @@ function optimize_hand() {
           </table>
         </td>
         <td class='menu'>
-          <b>Level:</b><br/>
+          <b>Level</b><br/>
           <select class='menu' id='handicap' onchange='select_level()'>
             <option value='3'>Jack</option>
             <option value='2'>Queen</option>
