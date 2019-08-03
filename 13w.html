@@ -1,61 +1,66 @@
 <html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-    <title>Chinese Poker•十三水</title>
+    <title>Chinese Poker</title>
     <style>
 h1 {
   color: brown;
   font-size: 40px;
 }
-h2 {
-  color: brown;
+div.logo {
+  color: aqua;
   font-size: 30px;
-  margin: auto;
   text-align: center;
 }
-button.menu {
-  font-size: 20px;
+div.score {
+  color: white;
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+}
+table.table {
+  background: darkgreen;
+  border-radius: 0px;
+  padding: 5px 5px;
+}
+button, select {
+  border: none;
   opacity: 0.8;
-  padding: 0px 0px;
+  font-size: 20px;
+  padding: 5px 5px;
   width: 80px;
 }
 button.move {
   font-size: 30px;
-  opacity: 0.8;
   padding: 0px 0px;
   width: 60px;
 }
 button.load {
   font-size: 20px;
-  opacity: 0.8;
-  padding: 0px 0px;
+  padding: 5px 0px;
   width: 40px;
 }
-button:hover {
-  opacity: 1;
+select.menu {
+  font-size: 20px;
+  padding: 5px 0px;
+  width: 80px;
+}
+button:hover, select:hover {
+  background: white;
+  opacity: 0.9;
 }
 tr.move {
   text-align: center;
 }
-tr.menu {
-  font-size: 20px;
-  text-align: center;
-}
-td.menu {
-  font-size: 20px;
-}
-select.menu {
-  font-size: 20px;
-  text-align: center;
-}
-tr.pattern {
-  color: darkblue;
+tr.menu, td.menu, tr.pattern {
+  color: white;
   font-size: 20px;
   text-align: center;
 }
 table.hand {
-  background-color: green;
+  background-color: darkgreen;
   border-radius: 5px;
+  margin: auto;
   padding: 2px;
 }
 table.card {
@@ -168,7 +173,7 @@ function redraw_hand() {
 }
 
 function activate_wave(wave) {
-  set_background(wave_names[active_wave], 'green');
+  set_background(wave_names[active_wave], 'darkgreen');
   set_background(wave_names[wave], 'orange');
   active_wave = wave;
 }
@@ -292,7 +297,7 @@ function enable_card(prefix, index) {
 
 function disable_card(prefix, index) {
   var id = prefix + 'card_' + index;
-  set_background(id, 'lightgrey');
+  set_background(id, 'silver');
 }
 
 function set_inner_html(id, value) {
@@ -737,9 +742,8 @@ function optimize_hand() {
     </script>
   </head>
   <body onload='deal_hand()'>
-    <h1>Chinese Poker•十三水</h1>
-    <hr/>
-    <table>
+    <h1>Chinese Poker</h1>
+    <table class='table'>
       <tr>
         <td>
           <table class='hand' id='ai_front'>
@@ -861,16 +865,15 @@ function optimize_hand() {
         </td>
       </tr>
       <tr class='menu'>
+        <td><div class='logo' id='logo'>十三水</div></td>
+        <td><div class='score' id='score'>You 0-0 AI</div></td>
+        <td>
+          <button class='menu' id='save' onclick='save_waves()'>Save</button>
+          <b class='menu' id='load'></b>
+        </td>
         <td>
           <button class='menu' id='deal' onclick='deal_hand()'>Deal</button>
           <button class='menu' id='show' onclick='show_hand()'>Show</button>
-        </td>
-        <td>
-          <h2 id='score'>You 0-0 AI</h2>
-        </td>
-        <td id='save'>
-          <button class='menu' onclick='save_waves()'>Save</button>
-          <b class='menu' id='load'></b>
         </td>
       </tr>
       <tr class='pattern'>
@@ -990,9 +993,20 @@ function optimize_hand() {
           </table>
         </td>
         <td>
-          <button class='menu' onclick='optimize_hand()'>Auto</button>
-          <hr/>
-          <button class='menu' onclick='undo_all_cards()'>Clear</button>
+          <table>
+            <tr>
+              <td>
+              <button class='menu' onclick='optimize_hand()'>Auto</button>
+              </td>
+            </tr>
+            <tr>
+            </tr>
+            <tr>
+              <td>
+                <button class='menu' onclick='undo_all_cards()'>Clear</button>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
       <tr class='move'>
@@ -1012,11 +1026,8 @@ function optimize_hand() {
           <button class='move' onclick='clear_wave(Back)'>⇊</button>
         </td>
       </tr>
-    </table>
-
-    <table>
       <tr>
-        <td>
+        <td colspan='3'>
           <table class='hand'>
             <tr>
               <td>
