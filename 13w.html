@@ -79,7 +79,23 @@ td.rank {
 td.suit {
   font-size: 25px;
 }
+div.alert {
+  background: darkgreen;
+  color: azure;
+  display: none;
+  font-size: 30px;
+  height: 100%;
+  left: 0;
+  margin: auto;
+  opacity: 0.9;
+  position: absolute;
+  text-align: center;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
 div.special {
+  bottom: 18%;
   color: gold;
   display: none;
   font-size: 80px;
@@ -90,7 +106,6 @@ div.special {
   position: absolute;
   text-align: center;
   text-shadow: 3px 3px 2px grey;
-  bottom: 18%;
   width: 90%;
 }
     </style>
@@ -354,10 +369,15 @@ function disable_element(id) {
   document.getElementById(id).disabled = true;
 }
 
+function show_alert(message) {
+  set_inner_html('alert_message', message);
+  show_element('alert');
+}
+
 function save_waves() {
   for (var wave in waves) {
     if (waves[wave].length < wave_sizes[wave]) {
-      alert('Please finish all three waves before saving them.');
+      show_alert('Finish all three waves before saving them.');
       return;
     }
   }
@@ -370,7 +390,7 @@ function save_waves() {
       }
     }
     if (duplicate) {
-      alert('Waves already saved as #' + (Number(number) + 1));
+      show_alert('Waves already saved as #' + (Number(number) + 1));
       return;
     }
   }
@@ -409,7 +429,7 @@ function select_level() {
 function show_hand() {
   for (var wave in waves) {
     if (waves[wave].length < wave_sizes[wave]) {
-      alert('Please finish all three waves before matching against AI.');
+      show_alert('Finish all three waves before matching against AI.');
       return;
     }
   }
@@ -418,11 +438,11 @@ function show_hand() {
               new WaveEvaluator(waves[Center], Center),
               new WaveEvaluator(waves[Back], Back)];
   if (eval[Center].is_smaller_than(eval[Front])) {
-    alert('The center wave should not be smaller than the front wave.');
+    show_alert('The center wave should not be smaller than the front wave.');
     return;
   }
   if (eval[Back].is_smaller_than(eval[Center])) {
-    alert('The back wave should not be smaller than the center wave.');
+    show_alert('The back wave should not be smaller than the center wave.');
     return;
   }
 
@@ -578,7 +598,7 @@ class SpecialPattern {
 function claim() {
   var special = new SpecialPattern(hand);
   if (special.pattern == None) {
-    alert('No six pairs, three straights, three flushes or dragon');
+    show_alert('No six pairs, three straights, three flushes or dragon.');
     return;
   }
 
@@ -1210,7 +1230,7 @@ function optimize_hand() {
       </tr>
       <tr>
         <td colspan='3'>
-          <div class='special' id='special'>Three Straights</div>
+          <div class='special' id='special'></div>
           <table class='hand'>
             <tr>
               <td>
@@ -1321,6 +1341,12 @@ function optimize_hand() {
               </td>
             </tr>
           </table>
+          <div class='alert' id='alert'>
+            <p>&nbsp;</p>
+            <p>&nbsp;</p>
+            <p id='alert_message'></p>
+            <button class='menu' onclick='hide_element("alert")'>OK</button>
+          </div>
         </td>
       </tr>
     </table>
