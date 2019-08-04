@@ -10,7 +10,9 @@ h1 {
 div.logo {
   color: aqua;
   font-size: 30px;
+  font-weight: bold;
   text-align: center;
+  text-shadow: 3px 3px 2px black;
 }
 div.score {
   color: white;
@@ -76,6 +78,20 @@ td.rank {
 td.suit {
   font-size: 25px;
 }
+div.special {
+  color: gold;
+  display: none;
+  font-size: 80px;
+  font-style: italic;
+  font-weight: bold;
+  left: 0;
+  opacity: 0.9;
+  position: absolute;
+  text-align: center;
+  text-shadow: 3px 3px 2px grey;
+  bottom: 23%;
+  width: 90%;
+}
     </style>
     <script>
 var suit_names = [
@@ -95,16 +111,21 @@ var pattern_names = [
 ];
 var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4, Flush = 5,
     FullHouse = 6, Quadruple = 7, StraightFlush = 8, RoyalFlush = 9;
-
-var wave_names = [ 'front', 'center', 'back' ];
-var Front = 0, Center = 1, Back = 2;
-
 var pattern_points = [
   //        Tr       FH Qu SF  RF
   [1, 1, 1, 3, 1, 1, 1, 1,  1,  1],  // front
   [1, 1, 1, 1, 1, 1, 2, 8, 10, 20],  // center
   [1, 1, 1, 1, 1, 1, 1, 4,  5, 10],  // back
 ];
+
+var special_names = [
+  '', 'Six Pairs', 'Three Flushes', 'Three Straights', 'Dragon'
+];
+var None = 0, SixPairs = 1, ThreeFlushes = 2, ThreeStraights = 3, Dragon = 4;
+var special_points = [0, 3, 3, 3, 13];
+
+var wave_names = [ 'front', 'center', 'back' ];
+var Front = 0, Center = 1, Back = 2;
 
 var ai_handicap = 0;
 var ai_total_points = 0, total_points = 0;
@@ -150,9 +171,11 @@ function deal_hand() {
   redraw_hand();
   saved_waves = [];
   set_inner_html('load', '&nbsp;Load: ');
-  document.getElementById('deal').style.display = 'none'
-  document.getElementById('show').style.display = 'inline'
-  document.getElementById('load').style.visibility = 'hidden';
+  hide_element('deal');
+  show_element('show');
+  hide_element('load');
+  hide_element('special');
+  enable_element('claim');
 }
 
 function sort_hand(toggle) {
@@ -164,7 +187,6 @@ function sort_hand(toggle) {
       return suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b);
     });
   }
-  // set_inner_html('sort', sorted_by_rank ? 'Sort by suit' : 'Sort by rank');
   redraw_hand();
 }
 
@@ -315,6 +337,22 @@ function set_background(id, color) {
   document.getElementById(id).style.backgroundColor = color;
 }
 
+function show_element(id) {
+  document.getElementById(id).style.display = 'inline';
+}
+
+function hide_element(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function enable_element(id) {
+  document.getElementById(id).disabled = false;
+}
+
+function disable_element(id) {
+  document.getElementById(id).disabled = true;
+}
+
 function save_waves() {
   for (var wave in waves) {
     if (waves[wave].length < wave_sizes[wave]) {
@@ -345,8 +383,8 @@ function save_waves() {
   button.innerHTML = Math.floor(number + 1);
   button.className = 'load';
   button.onclick = function() { load_waves(number) };
-  document.getElementById('load').style.visibility = 'visible';
   document.getElementById('load').appendChild(button);
+  show_element('load');
 }
 
 function load_waves(number) {
@@ -374,6 +412,7 @@ function show_hand() {
       return;
     }
   }
+
   var eval = [new WaveEvaluator(waves[Front], Front),
               new WaveEvaluator(waves[Center], Center),
               new WaveEvaluator(waves[Back], Back)];
@@ -418,12 +457,139 @@ function show_hand() {
   else if (ai_wins == 3) ai_points *= 2;
   set_inner_html('average', (wins == 3 || ai_wins == 3) ? 'x2' : 'x1');
 
+  update_scores(points, ai_points);
+
+  show_element('deal');
+  hide_element('show');
+}
+
+function update_scores(points, ai_points) {
   total_points += points;
   ai_total_points += ai_points;
   set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
+}
 
-  document.getElementById('deal').style.display = 'inline'
-  document.getElementById('show').style.display = 'none'
+class SpecialPattern {
+  constructor(hand) {
+    var hand_copy = hand.slice(0);
+
+    if (this.dragon(hand_copy)) this.special = Dragon;
+    else if (this.six_pairs(hand_copy)) this.special = SixPairs;
+    else if (this.three_flushes(hand_copy)) this.special = ThreeFlushes;
+    else if (this.three_straights(hand_copy)) this.special = ThreeStraights;
+    else this.special = None;
+
+    this.hand = hand_copy;
+  }
+
+  get pattern() { return this.special; }
+  get cards() { return this.hand; }
+
+  six_pairs(hand) {
+    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    var num_pairs = 0;
+    for (var i = 0; i < 12; ++i) {
+      if (rank(hand[i]) == rank(hand[i + 1])) {
+        ++num_pairs;
+        i += 1;
+      }
+    }
+    return num_pairs == 6;
+  }
+
+  is_flush(cards) {
+    for (var i = 0; i < cards.length - 1; ++i)
+      if (suit(cards[i]) != suit(cards[i + 1])) return false;
+    return true;
+  }
+
+  three_flushes(hand) {
+    hand.sort(function(a, b) { return suit(a) - suit(b); });
+    if (this.is_flush(hand.slice(0,3)) && this.is_flush(hand.slice(3,8)) &&
+        this.is_flush(hand.slice(8,13)))
+      return true;
+    if (this.is_flush(hand.slice(0,5)) && this.is_flush(hand.slice(5,8)) &&
+        this.is_flush(hand.slice(8,13)))
+      return true;
+    if (this.is_flush(hand.slice(0,5)) && this.is_flush(hand.slice(5,10)) &&
+        this.is_flush(hand.slice(10,13)))
+      return true;
+    return false;
+  }
+
+  is_straight(cards) {
+    for (var i = 0; i < cards.length - 1; ++i)
+      if (rank(cards[i]) + 1 != rank(cards[i + 1])) return false;
+    return true;
+  }
+
+  dragon(hand) {
+    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    return this.is_straight(hand);
+  }
+
+  remove_straight(histogram, length) {
+    for (var i = 0; i < histogram.length; ++i)
+      if (histogram[i] != 0) break;
+    for (var j = 1; j < length; ++j)
+      if (histogram[i + j] == 0) return false;
+    for (var j = 0; j < length; ++j)
+      --histogram[i + j];
+    return true;
+  }
+
+  three_straights_with_histogram(histogram) {
+    var h = histogram.slice(0);
+    if (this.remove_straight(h, 3) && this.remove_straight(h, 5) &&
+        this.remove_straight(h, 5))
+      return true;
+    var h = histogram.slice(0);
+    if (this.remove_straight(h, 5) && this.remove_straight(h, 3) &&
+        this.remove_straight(h, 5))
+      return true;
+    var h = histogram.slice(0);
+    if (this.remove_straight(h, 5) && this.remove_straight(h, 5) &&
+        this.remove_straight(h, 3))
+      return true;
+    return false;
+  }
+
+  three_straights(hand) {
+    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    var histogram = new Array(13).fill(0);
+    for (var card of hand) ++histogram[rank(card)];
+    if (this.three_straights_with_histogram(histogram)) return true;
+
+    var num_aces = histogram[Ace];
+    if (num_aces == 0) return false;
+
+    // Shift the histogram to the right and convert Aces to Ones.
+    histogram.unshift(0);
+    for (var i = 0; i < num_aces; ++i) {
+      --histogram[Ace + 1];
+      ++histogram[0];
+      if (this.three_straights_with_histogram(histogram)) return true;
+    }
+    return false;
+  }
+};
+
+function claim() {
+  var special = new SpecialPattern(hand);
+  if (special.pattern == None) {
+    alert('No six pairs, three straights, three flushes or dragon');
+    return;
+  }
+
+  show_element('deal');
+  hide_element('show');
+  disable_element('claim');
+  show_element('special');
+  set_inner_html('special', special_names[special.pattern]);
+  update_scores(special_points[special.pattern], 0);
+
+  hand = special.cards;
+  redraw_hand();
 }
 
 var junk_value = [
@@ -1043,6 +1209,7 @@ function optimize_hand() {
       </tr>
       <tr>
         <td colspan='3'>
+          <div class='special' id='special'>Three Straights</div>
           <table class='hand'>
             <tr>
               <td>
@@ -1140,7 +1307,19 @@ function optimize_hand() {
           </table>
         </td>
         <td>
-          <button class='menu' id='sort' onclick='sort_hand(true)'>Sort</button>
+          <table>
+            <tr>
+              <td>
+                <button class='menu' id='sort' onclick='sort_hand(true)'>Sort</button>
+              </td>
+            </tr>
+            <tr></tr>
+            <tr>
+              <td>
+                <button class='menu' id='claim' onclick='claim()'>Claim</button>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>
