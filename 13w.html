@@ -816,8 +816,10 @@ class WaveEvaluator {
   get value() { return this.win_percent; }
   get wave() {
     // Special case for 2345A.
-    if (this.pattern == Straight && this.rank == Five)
+    if ((this.pattern == Straight || this.pattern == StraightFlush) &&
+        this.rank == Five) {
       return this.cards.slice(4, 5).concat(this.cards.slice(0, 4));
+    }
     return this.cards;
   }
 
