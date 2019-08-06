@@ -110,14 +110,13 @@ div.alert {
   z-index: 1;
 }
 div.special {
-  bottom: 18%;
   color: gold;
   display: none;
   font-size: 80px;
   font-style: italic;
   font-weight: bold;
   left: 0;
-  opacity: 0.9;
+  opacity: 0.8;
   position: absolute;
   text-align: center;
   text-shadow: 3px 3px 2px grey;
@@ -158,7 +157,14 @@ var special_points = [0, 6, 6, 6, 13];
 var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
 
-var ai_handicap = 0;
+var level_def = [
+  {ai_handicap: 3, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Jack
+  {ai_handicap: 2, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Queen
+  {ai_handicap: 1, ai_claim: 1, auto: 1, claim_aid: 1, peek: 1}, // King
+  {ai_handicap: 0, ai_claim: 1, auto: 0, claim_aid: 0, peek: 0}  // Ace
+];
+var level = King - Jack;
+
 var ai_total_points = 0, total_points = 0;
 var ai_hand = [], hand = [];
 var sorted_by_rank = false;
@@ -207,7 +213,12 @@ function deal_hand() {
   show_element('show');
   hide_element('load');
   hide_element('special');
+  show_element('claim');
   enable_element('claim');
+  if (level_def[level].claim_aid && (new SpecialPattern(hand)).pattern == None)
+    hide_element('claim');
+  if (level_def[level].auto) show_element('auto');
+  else hide_element('auto');
 }
 
 function sort_hand(toggle) {
@@ -439,10 +450,22 @@ function load_waves(number) {
 }
 
 function select_level() {
-  ai_handicap = document.getElementById('handicap').value;
+  level = document.getElementById('level').value;
+}
+
+function peek_ai_card(index) {
+  if (!level_def[level].peek) return;
+
+  var wave = Math.floor((index + 2) / 5);
+  var card = wave == Front ? index : (index + 2) % 5;
+  var prefix = 'ai_' + wave_names[wave] + '_';
+  set_card(prefix, card, ai_hand[index]);
+  setTimeout(function() { clear_card(prefix, card); }, 500);
 }
 
 function show_hand() {
+  if (ai_claim()) return;
+
   for (var wave in waves) {
     if (waves[wave].length < wave_sizes[wave]) {
       show_alert('Finish all three waves before matching against AI.');
@@ -462,7 +485,7 @@ function show_hand() {
     return;
   }
 
-  var ai_waves = (new HandOptimizer(ai_hand, ai_handicap)).waves;
+  var ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
   var ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
                  new WaveEvaluator(ai_waves[Center], Center),
                  new WaveEvaluator(ai_waves[Back], Back)];
@@ -636,10 +659,37 @@ function claim() {
   disable_element('claim');
   show_element('special');
   set_inner_html('special', special_names[special.pattern]);
+  document.getElementById('special').style.bottom = '0%';
   update_scores(special_points[special.pattern], 0);
 
   hand = special.cards;
   redraw_hand();
+}
+
+function ai_claim() {
+  if (!level_def[level].ai_claim) return false;
+
+  var special = new SpecialPattern(ai_hand);
+  if (special.pattern == None) {
+    return false;
+  }
+
+  show_element('deal');
+  hide_element('show');
+  disable_element('claim');
+  show_element('special');
+  set_inner_html('special', special_names[special.pattern]);
+  document.getElementById('special').style.bottom = '74%';
+  update_scores(0, special_points[special.pattern]);
+
+  ai_hand = special.cards;
+  for (var index = 0; index < 13; ++index) {
+    var wave = Math.floor((index + 2) / 5);
+    var card = wave == Front ? index : (index + 2) % 5;
+    var prefix = 'ai_' + wave_names[wave] + '_';
+    set_card(prefix, card, ai_hand[index]);
+  }
+  return true;
 }
 
 var junk_value = [
@@ -982,21 +1032,21 @@ function optimize_hand() {
           <table class='hand' id='ai_front'>
             <tr>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_0' onclick='peek_ai_card(0)'>
                   <tr><td class='rank' id='ai_front_rank_0'>?</td></tr>
                   <tr><td class='suit' id='ai_front_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_1' onclick='peek_ai_card(1)'>
                   <tr><td class='rank' id='ai_front_rank_1'>?</td></tr>
                   <tr><td class='suit' id='ai_front_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_2' onclick='peek_ai_card(2)'>
                   <tr><td class='rank' id='ai_front_rank_2'>?</td></tr>
                   <tr><td class='suit' id='ai_front_suit_2'>?</td></tr>
                   <tr><td></td></tr>
@@ -1009,35 +1059,35 @@ function optimize_hand() {
           <table class='hand' id='ai_center'>
             <tr>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_3' onclick='peek_ai_card(3)'>
                   <tr><td class='rank' id='ai_center_rank_0'>?</td></tr>
                   <tr><td class='suit' id='ai_center_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_4' onclick='peek_ai_card(4)'>
                   <tr><td class='rank' id='ai_center_rank_1'>?</td></tr>
                   <tr><td class='suit' id='ai_center_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_5' onclick='peek_ai_card(5)'>
                   <tr><td class='rank' id='ai_center_rank_2'>?</td></tr>
                   <tr><td class='suit' id='ai_center_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_6' onclick='peek_ai_card(6)'>
                   <tr><td class='rank' id='ai_center_rank_3'>?</td></tr>
                   <tr><td class='suit' id='ai_center_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_7' onclick='peek_ai_card(7)'>
                   <tr><td class='rank' id='ai_center_rank_4'>?</td></tr>
                   <tr><td class='suit' id='ai_center_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -1050,35 +1100,35 @@ function optimize_hand() {
           <table class='hand' id='ai_back'>
             <tr>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_8' onclick='peek_ai_card(8)'>
                   <tr><td class='rank' id='ai_back_rank_0'>?</td></tr>
                   <tr><td class='suit' id='ai_back_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_9' onclick='peek_ai_card(9)'>
                   <tr><td class='rank' id='ai_back_rank_1'>?</td></tr>
                   <tr><td class='suit' id='ai_back_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_10' onclick='peek_ai_card(10)'>
                   <tr><td class='rank' id='ai_back_rank_2'>?</td></tr>
                   <tr><td class='suit' id='ai_back_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_11' onclick='peek_ai_card(11)'>
                   <tr><td class='rank' id='ai_back_rank_3'>?</td></tr>
                   <tr><td class='suit' id='ai_back_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card'>
+                <table class='card' id='ai_card_12' onclick='peek_ai_card(12)'>
                   <tr><td class='rank' id='ai_back_rank_4'>?</td></tr>
                   <tr><td class='suit' id='ai_back_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -1089,11 +1139,11 @@ function optimize_hand() {
         </td>
         <td class='menu'>
           <b>Level</b><br/>
-          <select class='menu' id='handicap' onchange='select_level()'>
-            <option value='3'>Jack</option>
-            <option value='2'>Queen</option>
-            <option value='1' selected>King</option>
-            <option value='0'>Ace</option>
+          <select class='menu' id='level' onchange='select_level()'>
+            <option value='0'>Jack</option>
+            <option value='1'>Queen</option>
+            <option value='2' selected>King</option>
+            <option value='3'>Ace</option>
           </select>
         </td>
       </tr>
@@ -1232,7 +1282,7 @@ function optimize_hand() {
           <table>
             <tr>
               <td>
-              <button class='menu' onclick='optimize_hand()'>Auto</button>
+              <button class='menu' id='auto' onclick='optimize_hand()'>Auto</button>
               </td>
             </tr>
             <tr>
