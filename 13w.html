@@ -22,11 +22,18 @@ div.logo {
   text-align: center;
   text-shadow: 3px 3px 2px black;
 }
-div.score {
+td.score {
   color: white;
   font-size: 30px;
   font-weight: bold;
+  position: relative;
   text-align: center;
+}
+div#score_diff {
+  color: gold;
+  font-size: 20px;
+  position: absolute;
+  width: 100%;
 }
 table.table {
   background: darkgreen;
@@ -195,6 +202,7 @@ function deal_hand() {
   redraw_hand();
   saved_waves = [];
   set_inner_html('load', '&nbsp;Load: ');
+  hide_element('score_diff');
   hide_element('deal');
   show_element('show');
   hide_element('load');
@@ -361,8 +369,8 @@ function set_background(id, color) {
   document.getElementById(id).style.backgroundColor = color;
 }
 
-function show_element(id) {
-  document.getElementById(id).style.display = 'inline';
+function show_element(id, display = 'inline') {
+  document.getElementById(id).style.display = display;
 }
 
 function hide_element(id) {
@@ -497,6 +505,18 @@ function update_scores(points, ai_points) {
   total_points += points;
   ai_total_points += ai_points;
   set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
+  set_inner_html('score_diff', '&nbsp;&nbsp;+' + points + ' ' + '+' + ai_points);
+  show_element('score_diff', 'block');
+  move_score_diff(-5);
+}
+
+function move_score_diff(offset) {
+  document.getElementById('score_diff').style.top = offset + 'px';
+  if (offset > -25) {
+    setTimeout(function() { move_score_diff(offset - 2); }, 100);
+  } else {
+    hide_element('score_diff');
+  }
 }
 
 class SpecialPattern {
@@ -1079,7 +1099,10 @@ function optimize_hand() {
       </tr>
       <tr class='menu'>
         <td><div class='logo' id='logo'>十三水</div></td>
-        <td><div class='score' id='score'>You 0-0 AI</div></td>
+        <td class='score'>
+          <div id='score_diff'></div>
+          <div id='score'>You 0-0 AI</div>
+        </td>
         <td>
           <button class='menu' id='save' onclick='save_waves()'>Save</button>
           <b class='menu' id='load'></b>
