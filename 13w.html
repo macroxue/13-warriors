@@ -507,13 +507,13 @@ function update_scores(points, ai_points) {
   set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
   set_inner_html('score_diff', '&nbsp;&nbsp;+' + points + ' ' + '+' + ai_points);
   show_element('score_diff', 'block');
-  move_score_diff(-5);
+  animate_score_diff(-5);
 }
 
-function move_score_diff(offset) {
+function animate_score_diff(offset) {
   document.getElementById('score_diff').style.top = offset + 'px';
   if (offset > -25) {
-    setTimeout(function() { move_score_diff(offset - 2); }, 100);
+    setTimeout(function() { animate_score_diff(offset - 2); }, 100);
   } else {
     hide_element('score_diff');
   }
@@ -582,7 +582,7 @@ class SpecialPattern {
     for (var i = 0; i < histogram.length; ++i)
       if (histogram[i] != 0) break;
     for (var j = 1; j < length; ++j)
-      if (histogram[i + j] == 0) return false;
+      if (i + j >= histogram.length || histogram[i + j] == 0) return false;
     for (var j = 0; j < length; ++j)
       --histogram[i + j];
     return true;
