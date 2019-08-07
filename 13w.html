@@ -152,7 +152,7 @@ var special_names = [
 ];
 var None = 0, SixPairs = 1, ThreeFlushes = 2, ThreeStraights = 3, Dragon = 4;
 var special_points = [0, 6, 6, 6, 13];
-var fold_points = 2;
+var fold_points = 3;
 
 var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
@@ -165,12 +165,13 @@ var level_def = [
 ];
 var level = King - Jack;
 
-var ai_total_points = 0, total_points = 0;
-var ai_hand = [], hand = [];
+var total_points = 0, ai_total_points = 0;
+var hand = [], ai_hand = [];
 var sorted_by_rank = false;
 var wave_sizes = [ 3, 5, 5 ];
 var wave_values = [ 0, 0, 0 ];
-var waves = [ [], [], [] ];
+var waves = [ [], [], [] ], ai_waves = [];
+var ai_eval = [];
 var membership = {};
 var active_wave = Front;
 var saved_waves = [];
@@ -178,7 +179,7 @@ var saved_waves = [];
 function suit(card) { return Math.floor(card / 13); }
 function rank(card) { return card % 13; }
 
-function deal_hand() {
+function shuffle_deck() {
   var deck = [];
   for (var i = 0; i < 52; ++i) {
     deck.push(i);
@@ -189,14 +190,23 @@ function deal_hand() {
     deck[pos] = deck[51 - i];
     deck[51 - i] = card;
   }
+  return deck;
+}
 
+function deal_hand() {
+  select_level();
+
+  var deck = shuffle_deck();
   ai_hand = deck.slice(0, 13);
   for (var wave in wave_names) {
     for (var i = 0; i < wave_sizes[wave]; ++i) {
       clear_card('ai_' + wave_names[wave] + '_', i);
     }
   }
-  select_level();
+  ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
+  ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
+    new WaveEvaluator(ai_waves[Center], Center),
+    new WaveEvaluator(ai_waves[Back], Back)];
 
   hand = deck.slice(13, 26);
   sort_hand(false);
@@ -226,6 +236,16 @@ function deal_hand() {
     hide_element('auto');
     show_element('fold');
     enable_element('fold');
+
+    var f = ai_eval[Front].value / 100.0;
+    var c = ai_eval[Center].value / 100.0;
+    var b = ai_eval[Back].value / 100.0;
+    var win3 = f*c*b;
+    var win2 = f*c*(1-b) + f*(1-c)*b + (1-f)*c*b;
+    var win1 = f*(1-c)*(1-b) + (1-f)*c*(1-b) + (1-f)*(1-c)*b;
+    var win0 = (1-f)*(1-c)*(1-b) + (1-f)*(1-c)*(1-b) + (1-f)*(1-c)*(1-b);
+    if (win3*6 + win2*1 + win1*-1 + win0*-6 < -fold_points)
+      ai_fold_hand();
   }
 }
 
@@ -484,6 +504,12 @@ function fold_hand() {
   on_hand_finished();
 }
 
+function ai_fold_hand() {
+  show_special_message('Fold', '74%', 'silver');
+  update_scores(fold_points, 0);
+  on_hand_finished();
+}
+
 function show_hand() {
   if (ai_claim()) return;
 
@@ -506,10 +532,6 @@ function show_hand() {
     return;
   }
 
-  var ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
-  var ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
-                 new WaveEvaluator(ai_waves[Center], Center),
-                 new WaveEvaluator(ai_waves[Back], Back)];
   var points = 0, ai_points = 0;
   var wins = 0, ai_wins = 0;
   for (var wave in ai_waves) {
