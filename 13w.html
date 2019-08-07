@@ -243,7 +243,7 @@ function deal_hand() {
     var win3 = f*c*b;
     var win2 = f*c*(1-b) + f*(1-c)*b + (1-f)*c*b;
     var win1 = f*(1-c)*(1-b) + (1-f)*c*(1-b) + (1-f)*(1-c)*b;
-    var win0 = (1-f)*(1-c)*(1-b) + (1-f)*(1-c)*(1-b) + (1-f)*(1-c)*(1-b);
+    var win0 = (1-f)*(1-c)*(1-b);
     if (win3*6 + win2*1 + win1*-1 + win0*-6 < -fold_points)
       ai_fold_hand();
   }
