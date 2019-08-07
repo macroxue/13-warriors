@@ -207,8 +207,10 @@ function deal_hand() {
   }
   redraw_hand();
   saved_waves = [];
+
   set_inner_html('load', '&nbsp;Load: ');
   hide_element('score_diff');
+  disable_element('level');
   hide_element('deal');
   show_element('show');
   hide_element('load');
@@ -518,10 +520,7 @@ function show_hand() {
   set_inner_html('average', (wins == 3 || ai_wins == 3) ? 'x2' : 'x1');
 
   update_scores(points, ai_points);
-
-  show_element('deal');
-  hide_element('show');
-  disable_element('claim');
+  on_hand_finished();
 }
 
 function update_scores(points, ai_points) {
@@ -540,6 +539,13 @@ function animate_score_diff(offset) {
   } else {
     hide_element('score_diff');
   }
+}
+
+function on_hand_finished() {
+  enable_element('level');
+  show_element('deal');
+  hide_element('show');
+  disable_element('claim');
 }
 
 class SpecialPattern {
@@ -654,16 +660,15 @@ function claim() {
     return;
   }
 
-  show_element('deal');
-  hide_element('show');
-  disable_element('claim');
+  hand = special.cards;
+  redraw_hand();
+
   show_element('special');
   set_inner_html('special', special_names[special.pattern]);
   document.getElementById('special').style.bottom = '0%';
-  update_scores(special_points[special.pattern], 0);
 
-  hand = special.cards;
-  redraw_hand();
+  update_scores(special_points[special.pattern], 0);
+  on_hand_finished();
 }
 
 function ai_claim() {
@@ -674,14 +679,6 @@ function ai_claim() {
     return false;
   }
 
-  show_element('deal');
-  hide_element('show');
-  disable_element('claim');
-  show_element('special');
-  set_inner_html('special', special_names[special.pattern]);
-  document.getElementById('special').style.bottom = '74%';
-  update_scores(0, special_points[special.pattern]);
-
   ai_hand = special.cards;
   for (var index = 0; index < 13; ++index) {
     var wave = Math.floor((index + 2) / 5);
@@ -689,6 +686,13 @@ function ai_claim() {
     var prefix = 'ai_' + wave_names[wave] + '_';
     set_card(prefix, card, ai_hand[index]);
   }
+
+  show_element('special');
+  set_inner_html('special', special_names[special.pattern]);
+  document.getElementById('special').style.bottom = '74%';
+
+  update_scores(0, special_points[special.pattern]);
+  on_hand_finished();
   return true;
 }
 
