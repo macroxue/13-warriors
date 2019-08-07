@@ -110,7 +110,6 @@ div.alert {
   z-index: 1;
 }
 div.special {
-  color: gold;
   display: none;
   font-size: 80px;
   font-style: italic;
@@ -153,6 +152,7 @@ var special_names = [
 ];
 var None = 0, SixPairs = 1, ThreeFlushes = 2, ThreeStraights = 3, Dragon = 4;
 var special_points = [0, 6, 6, 6, 13];
+var fold_points = 2;
 
 var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
@@ -219,8 +219,14 @@ function deal_hand() {
   enable_element('claim');
   if (level_def[level].claim_aid && (new SpecialPattern(hand)).pattern == None)
     hide_element('claim');
-  if (level_def[level].auto) show_element('auto');
-  else hide_element('auto');
+  if (level_def[level].auto) {
+    show_element('auto');
+    hide_element('fold');
+  } else {
+    hide_element('auto');
+    show_element('fold');
+    enable_element('fold');
+  }
 }
 
 function sort_hand(toggle) {
@@ -465,6 +471,19 @@ function peek_ai_card(index) {
   setTimeout(function() { clear_card(prefix, card); }, 500);
 }
 
+function show_special_message(message, bottom, color) {
+  show_element('special');
+  set_inner_html('special', message);
+  document.getElementById('special').style.bottom = bottom;
+  document.getElementById('special').style.color = color;
+}
+
+function fold_hand() {
+  show_special_message('Fold', '0%', 'silver');
+  update_scores(0, fold_points);
+  on_hand_finished();
+}
+
 function show_hand() {
   if (ai_claim()) return;
 
@@ -545,6 +564,7 @@ function on_hand_finished() {
   enable_element('level');
   show_element('deal');
   hide_element('show');
+  disable_element('fold');
   disable_element('claim');
 }
 
@@ -663,10 +683,7 @@ function claim() {
   hand = special.cards;
   redraw_hand();
 
-  show_element('special');
-  set_inner_html('special', special_names[special.pattern]);
-  document.getElementById('special').style.bottom = '0%';
-
+  show_special_message(special_names[special.pattern], '0%', 'gold');
   update_scores(special_points[special.pattern], 0);
   on_hand_finished();
 }
@@ -687,10 +704,7 @@ function ai_claim() {
     set_card(prefix, card, ai_hand[index]);
   }
 
-  show_element('special');
-  set_inner_html('special', special_names[special.pattern]);
-  document.getElementById('special').style.bottom = '74%';
-
+  show_special_message(special_names[special.pattern], '74%', 'gold');
   update_scores(0, special_points[special.pattern]);
   on_hand_finished();
   return true;
@@ -1286,7 +1300,8 @@ function optimize_hand() {
           <table>
             <tr>
               <td>
-              <button class='menu' id='auto' onclick='optimize_hand()'>Auto</button>
+                <button class='menu' id='auto' onclick='optimize_hand()'>Auto</button>
+                <button class='menu' id='fold' onclick='show_element("fold_alert")'>Fold</button>
               </td>
             </tr>
             <tr>
@@ -1434,6 +1449,13 @@ function optimize_hand() {
             <p>&nbsp;</p>
             <p id='alert_message'></p>
             <button class='menu' onclick='hide_element("alert")'>OK</button>
+          </div>
+          <div class='alert' id='fold_alert' onclick='hide_element("fold_alert")'>
+            <p>&nbsp;</p>
+            <p>&nbsp;</p>
+            <p>Really want to fold your hand?</p>
+            <button class='menu' onclick='fold_hand()'>Yes</button>&nbsp;&nbsp;
+            <button class='menu' onclick='hide_element("fold_alert")'>No</button>
           </div>
         </td>
       </tr>
