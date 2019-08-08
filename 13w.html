@@ -561,7 +561,9 @@ function show_hand() {
 }
 
 function update_scores(points, ai_points) {
-  document.getElementById('coin').play();
+  var sound = document.getElementById(points >= ai_points ? 'win' : 'lose');
+  sound.volume = Math.abs(points - ai_points) / 10 + 0.1;
+  sound.play();
 
   total_points += points;
   ai_total_points += ai_points;
@@ -1323,7 +1325,8 @@ function optimize_hand() {
         <td class='score'>
           <div id='score_diff'></div>
           <div id='score'>You 0-0 AI</div>
-          <audio id='coin'><source src='coin.mp3'/></audio>
+          <audio id='win'><source src='win.mp3'/></audio>
+          <audio id='lose'><source src='lose.mp3'/></audio>
         </td>
         <td>
           <button class='menu' id='save' onclick='save_waves()'>Save</button>
