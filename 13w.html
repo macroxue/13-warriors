@@ -562,7 +562,7 @@ function show_hand() {
 
 function update_scores(points, ai_points) {
   var sound = document.getElementById(points >= ai_points ? 'win' : 'lose');
-  sound.volume = Math.abs(points - ai_points) / 10 + 0.1;
+  sound.volume = Math.min(1.0, Math.abs(points - ai_points) / 10 + 0.1);
   sound.play();
 
   total_points += points;
