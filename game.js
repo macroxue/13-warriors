@@ -137,17 +137,6 @@ function activate_wave(wave) {
 
 function move_card(index) {
   var card = hand[index];
-  if (membership[card] != null) {
-    var wave = membership[card];
-    for (var i in waves[wave]) {
-      if (waves[wave][i] == card) {
-        undo_card(membership[card], i);
-        break;
-      }
-    }
-    return;
-  }
-
   disable_card('', index);
   membership[card] = active_wave;
   waves[active_wave].push(card);
@@ -164,7 +153,39 @@ function move_card(index) {
   }
 }
 
-function undo_card(wave, index) {
+var long_press_ms = 300;
+var press_time;
+
+function press_card(index) {
+  press_time = (new Date()).getTime();
+}
+
+function release_card(index) {
+  if (undo_hand_card(index)) return;
+
+  var release_time = (new Date()).getTime();
+  if (release_time - press_time < long_press_ms) {
+    move_card(index);
+  } else {
+    fill_wave(active_wave, index);
+  }
+}
+
+function undo_hand_card(index) {
+  var card = hand[index];
+  if (membership[card] == null) return false;
+
+  var wave = membership[card];
+  for (var i in waves[wave]) {
+    if (waves[wave][i] == card) {
+      undo_wave_card(membership[card], i);
+      break;
+    }
+  }
+  return true;
+}
+
+function undo_wave_card(wave, index) {
   if (waves[wave].length <= index) {
     redraw_wave(wave);
     return;
@@ -181,15 +202,16 @@ function undo_card(wave, index) {
   redraw_wave(wave);
 }
 
-function fill_wave(wave) {
+function fill_wave(wave, start_index = 0) {
   activate_wave(wave);
   for (var i = waves[wave].length; i < wave_sizes[wave]; ++i) {
-    for (var index in hand) {
+    for (var index = start_index; index < hand.length; ++index) {
       if (membership[hand[index]] == null) {
         move_card(index);
         break;
       }
     }
+    start_index = index + 1;
   }
 }
 
@@ -207,7 +229,7 @@ function undo_all_cards() {
 
 function clear_wave(wave) {
   for (var i = waves[wave].length - 1; i >= 0; --i) {
-    undo_card(wave, i);
+    undo_wave_card(wave, i);
   }
   redraw_wave(wave);
 }

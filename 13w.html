@@ -159,21 +159,21 @@
           <table class='hand' id='front'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card(Front, 0)'>
+                <table class='card' onclick='undo_wave_card(Front, 0)'>
                   <tr><td class='rank' id='front_rank_0'>?</td></tr>
                   <tr><td class='suit' id='front_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Front, 1)'>
+                <table class='card' onclick='undo_wave_card(Front, 1)'>
                   <tr><td class='rank' id='front_rank_1'>?</td></tr>
                   <tr><td class='suit' id='front_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Front, 2)'>
+                <table class='card' onclick='undo_wave_card(Front, 2)'>
                   <tr><td class='rank' id='front_rank_2'>?</td></tr>
                   <tr><td class='suit' id='front_suit_2'>?</td></tr>
                   <tr><td></td></tr>
@@ -186,35 +186,35 @@
           <table class='hand' id='center'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card(Center, 0)'>
+                <table class='card' onclick='undo_wave_card(Center, 0)'>
                   <tr><td class='rank' id='center_rank_0'>?</td></tr>
                   <tr><td class='suit' id='center_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Center, 1)'>
+                <table class='card' onclick='undo_wave_card(Center, 1)'>
                   <tr><td class='rank' id='center_rank_1'>?</td></tr>
                   <tr><td class='suit' id='center_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Center, 2)'>
+                <table class='card' onclick='undo_wave_card(Center, 2)'>
                   <tr><td class='rank' id='center_rank_2'>?</td></tr>
                   <tr><td class='suit' id='center_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Center, 3)'>
+                <table class='card' onclick='undo_wave_card(Center, 3)'>
                   <tr><td class='rank' id='center_rank_3'>?</td></tr>
                   <tr><td class='suit' id='center_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Center, 4)'>
+                <table class='card' onclick='undo_wave_card(Center, 4)'>
                   <tr><td class='rank' id='center_rank_4'>?</td></tr>
                   <tr><td class='suit' id='center_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -227,35 +227,35 @@
           <table class='hand' id='back'>
             <tr>
               <td>
-                <table class='card' onclick='undo_card(Back, 0)'>
+                <table class='card' onclick='undo_wave_card(Back, 0)'>
                   <tr><td class='rank' id='back_rank_0'>?</td></tr>
                   <tr><td class='suit' id='back_suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Back, 1)'>
+                <table class='card' onclick='undo_wave_card(Back, 1)'>
                   <tr><td class='rank' id='back_rank_1'>?</td></tr>
                   <tr><td class='suit' id='back_suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Back, 2)'>
+                <table class='card' onclick='undo_wave_card(Back, 2)'>
                   <tr><td class='rank' id='back_rank_2'>?</td></tr>
                   <tr><td class='suit' id='back_suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Back, 3)'>
+                <table class='card' onclick='undo_wave_card(Back, 3)'>
                   <tr><td class='rank' id='back_rank_3'>?</td></tr>
                   <tr><td class='suit' id='back_suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' onclick='undo_card(Back, 4)'>
+                <table class='card' onclick='undo_wave_card(Back, 4)'>
                   <tr><td class='rank' id='back_rank_4'>?</td></tr>
                   <tr><td class='suit' id='back_suit_4'>?</td></tr>
                   <tr><td></td></tr>
@@ -305,91 +305,91 @@
           <table class='hand'>
             <tr>
               <td>
-                <table class='card' id='card_0' onclick='move_card(0)'>
+                <table class='card' id='card_0' onmousedown='press_card(0)' onmouseup='release_card(0)'>
                   <tr><td class='rank' id='rank_0'>?</td></tr>
                   <tr><td class='suit' id='suit_0'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_1' onclick='move_card(1)'>
+                <table class='card' id='card_1' onmousedown='press_card(1)' onmouseup='release_card(1)'>
                   <tr><td class='rank' id='rank_1'>?</td></tr>
                   <tr><td class='suit' id='suit_1'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_2' onclick='move_card(2)'>
+                <table class='card' id='card_2' onmousedown='press_card(2)' onmouseup='release_card(2)'>
                   <tr><td class='rank' id='rank_2'>?</td></tr>
                   <tr><td class='suit' id='suit_2'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_3' onclick='move_card(3)'>
+                <table class='card' id='card_3' onmousedown='press_card(3)' onmouseup='release_card(3)'>
                   <tr><td class='rank' id='rank_3'>?</td></tr>
                   <tr><td class='suit' id='suit_3'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_4' onclick='move_card(4)'>
+                <table class='card' id='card_4' onmousedown='press_card(4)' onmouseup='release_card(4)'>
                   <tr><td class='rank' id='rank_4'>?</td></tr>
                   <tr><td class='suit' id='suit_4'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_5' onclick='move_card(5)'>
+                <table class='card' id='card_5' onmousedown='press_card(5)' onmouseup='release_card(5)'>
                   <tr><td class='rank' id='rank_5'>?</td></tr>
                   <tr><td class='suit' id='suit_5'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_6' onclick='move_card(6)'>
+                <table class='card' id='card_6' onmousedown='press_card(6)' onmouseup='release_card(6)'>
                   <tr><td class='rank' id='rank_6'>?</td></tr>
                   <tr><td class='suit' id='suit_6'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_7' onclick='move_card(7)'>
+                <table class='card' id='card_7' onmousedown='press_card(7)' onmouseup='release_card(7)'>
                   <tr><td class='rank' id='rank_7'>?</td></tr>
                   <tr><td class='suit' id='suit_7'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_8' onclick='move_card(8)'>
+                <table class='card' id='card_8' onmousedown='press_card(8)' onmouseup='release_card(8)'>
                   <tr><td class='rank' id='rank_8'>?</td></tr>
                   <tr><td class='suit' id='suit_8'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_9' onclick='move_card(9)'>
+                <table class='card' id='card_9' onmousedown='press_card(9)' onmouseup='release_card(9)'>
                   <tr><td class='rank' id='rank_9'>?</td></tr>
                   <tr><td class='suit' id='suit_9'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_10' onclick='move_card(10)'>
+                <table class='card' id='card_10' onmousedown='press_card(10)' onmouseup='release_card(10)'>
                   <tr><td class='rank' id='rank_10'>?</td></tr>
                   <tr><td class='suit' id='suit_10'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_11' onclick='move_card(11)'>
+                <table class='card' id='card_11' onmousedown='press_card(11)' onmouseup='release_card(11)'>
                   <tr><td class='rank' id='rank_11'>?</td></tr>
                   <tr><td class='suit' id='suit_11'>?</td></tr>
                   <tr><td></td></tr>
                 </table>
               </td>
               <td>
-                <table class='card' id='card_12' onclick='move_card(12)'>
+                <table class='card' id='card_12' onmousedown='press_card(12)' onmouseup='release_card(12)'>
                   <tr><td class='rank' id='rank_12'>?</td></tr>
                   <tr><td class='suit' id='suit_12'>?</td></tr>
                   <tr><td></td></tr>
