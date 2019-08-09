@@ -1,0 +1,121 @@
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+h1 {
+  color: brown;
+  font-size: 40px;
+}
+div.logo {
+  color: aqua;
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+  text-shadow: 3px 3px 2px black;
+}
+td.score {
+  color: white;
+  font-size: 30px;
+  font-weight: bold;
+  position: relative;
+  text-align: center;
+}
+div#score_diff {
+  color: gold;
+  font-size: 20px;
+  position: absolute;
+  width: 100%;
+}
+table.table {
+  background: darkgreen;
+  border-radius: 0px;
+  padding: 5px 5px;
+  position: relative;
+}
+button, select {
+  border: none;
+  opacity: 0.8;
+  font-size: 20px;
+  padding: 5px 5px;
+  width: 80px;
+}
+button.move {
+  font-size: 30px;
+  padding: 0px 0px;
+  width: 60px;
+}
+button.load {
+  font-size: 20px;
+  padding: 5px 0px;
+  width: 40px;
+}
+button#show, button#fold, button#claim {
+  display: none
+}
+select.menu {
+  font-size: 20px;
+  padding: 5px 0px;
+  width: 80px;
+}
+button:hover, select:hover {
+  background: white;
+  opacity: 0.9;
+}
+tr.move {
+  text-align: center;
+}
+tr.menu, td.menu, tr.pattern {
+  color: white;
+  font-size: 20px;
+  text-align: center;
+}
+table.hand {
+  background-color: darkgreen;
+  border-radius: 5px;
+  margin: auto;
+  padding: 2px;
+}
+table.card {
+  background-color: white;
+  border-radius: 5px;
+  padding: 0px;
+  text-align: center;
+  width: 60px;
+}
+td.rank {
+  font-size: 30px;
+}
+td.suit {
+  font-size: 25px;
+}
+div.alert {
+  background: darkgreen;
+  color: azure;
+  display: none;
+  font-size: 30px;
+  height: 100%;
+  left: 0;
+  margin: auto;
+  opacity: 0.9;
+  position: absolute;
+  text-align: center;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+div.special {
+  display: none;
+  font-size: 80px;
+  font-style: italic;
+  font-weight: bold;
+  left: 0;
+  opacity: 0.8;
+  position: absolute;
+  text-align: center;
+  text-shadow: 3px 3px 2px grey;
+  width: 90%;
+}
