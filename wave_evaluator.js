@@ -1,9 +1,9 @@
+var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4, Flush = 5,
+    FullHouse = 6, Quadruple = 7, StraightFlush = 8, RoyalFlush = 9;
 var pattern_names = [
   'junk', 'pair', 'two pairs', 'triple', 'straight', 'flush',
   'full house', 'quadruple', 'straight flush', 'royal flush'
 ];
-var Junk = 0, Pair = 1, TwoPairs = 2, Triple = 3, Straight = 4, Flush = 5,
-    FullHouse = 6, Quadruple = 7, StraightFlush = 8, RoyalFlush = 9;
 var pattern_points = [
   //        Tr       FH Qu SF  RF
   [1, 1, 1, 3, 1, 1, 1, 1,  1,  1],  // front

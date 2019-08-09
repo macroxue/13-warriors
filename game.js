@@ -4,15 +4,15 @@ var suit_names = [
   '<font color="black">♣</font>',
   '<font color="red">♦</font>',
 ];
-var rank_names = [
-  '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A' ];
+
 var Two = 0, Three = 1, Four = 2, Five = 3, Six = 4, Seven = 5, Eight = 6,
     Nine = 7, Ten = 8, Jack = 9, Queen = 10, King = 11, Ace = 12;
+var rank_names = [
+  '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A' ];
 
-var fold_points = 3;
-
-var wave_names = [ 'front', 'center', 'back' ];
 var Front = 0, Center = 1, Back = 2;
+var wave_names = [ 'front', 'center', 'back' ];
+var wave_sizes = [ 3, 5, 5 ];
 
 var level_def = [
   {ai_handicap: 3, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Jack
@@ -22,14 +22,14 @@ var level_def = [
 ];
 var level = King - Jack;
 
+var fold_points = 3;
+
 var total_points = 0, ai_total_points = 0;
 var hand = [], ai_hand = [];
 var sorted_by_rank = false;
-var wave_sizes = [ 3, 5, 5 ];
-var wave_values = [ 0, 0, 0 ];
 var waves = [ [], [], [] ], ai_waves = [];
-var ai_eval = [];
-var membership = {};
+var wave_values = [ 0, 0, 0 ], ai_eval = [];
+var membership = {};  // which wave a card belongs to
 var active_wave = Front;
 var saved_waves = [];
 
@@ -43,6 +43,10 @@ function shuffle(array) {
     array[pos] = array[array.length - 1 - i];
     array[array.length - 1 - i] = item;
   }
+}
+
+function select_level() {
+  level = document.getElementById('level').value;
 }
 
 function deal_hand() {
@@ -160,6 +164,23 @@ function move_card(index) {
   }
 }
 
+function undo_card(wave, index) {
+  if (waves[wave].length <= index) {
+    redraw_wave(wave);
+    return;
+  }
+
+  for (var card in hand) {
+    if (hand[card] == waves[wave][index]) {
+      enable_card('', card);
+      delete membership[hand[card]];
+      break;
+    }
+  }
+  waves[wave].splice(index, 1);
+  redraw_wave(wave);
+}
+
 function fill_wave(wave) {
   activate_wave(wave);
   for (var i = waves[wave].length; i < wave_sizes[wave]; ++i) {
@@ -191,23 +212,6 @@ function clear_wave(wave) {
   redraw_wave(wave);
 }
 
-function undo_card(wave, index) {
-  if (waves[wave].length <= index) {
-    redraw_wave(wave);
-    return;
-  }
-
-  for (var card in hand) {
-    if (hand[card] == waves[wave][index]) {
-      enable_card('', card);
-      delete membership[hand[card]];
-      break;
-    }
-  }
-  waves[wave].splice(index, 1);
-  redraw_wave(wave);
-}
-
 function redraw_wave(wave) {
   var name = wave_names[wave];
   if (waves[wave].length < wave_sizes[wave]) {
@@ -231,55 +235,6 @@ function redraw_wave(wave) {
       clear_card(name + '_', i);
   }
   activate_wave(wave);
-}
-
-function set_card(prefix, index, card) {
-  set_inner_html(prefix + 'suit_' + index, suit_names[suit(card)]);
-  set_inner_html(prefix + 'rank_' + index, rank_names[rank(card)]);
-}
-
-function clear_card(prefix, index) {
-  set_inner_html(prefix + 'suit_' + index, '?');
-  set_inner_html(prefix + 'rank_' + index, '?');
-}
-
-function enable_card(prefix, index) {
-  var id = prefix + 'card_' + index;
-  set_background(id, 'white');
-}
-
-function disable_card(prefix, index) {
-  var id = prefix + 'card_' + index;
-  set_background(id, 'silver');
-}
-
-function set_inner_html(id, value) {
-  document.getElementById(id).innerHTML = value;
-}
-
-function set_background(id, color) {
-  document.getElementById(id).style.backgroundColor = color;
-}
-
-function show_element(id, display = 'inline') {
-  document.getElementById(id).style.display = display;
-}
-
-function hide_element(id) {
-  document.getElementById(id).style.display = 'none';
-}
-
-function enable_element(id) {
-  document.getElementById(id).disabled = false;
-}
-
-function disable_element(id) {
-  document.getElementById(id).disabled = true;
-}
-
-function show_alert(message) {
-  set_inner_html('alert_message', message);
-  show_element('alert');
 }
 
 function save_waves() {
@@ -330,10 +285,6 @@ function load_waves(number) {
   redraw_hand();
 }
 
-function select_level() {
-  level = document.getElementById('level').value;
-}
-
 function peek_ai_card(index) {
   if (!level_def[level].peek) return;
 
@@ -342,13 +293,6 @@ function peek_ai_card(index) {
   var prefix = 'ai_' + wave_names[wave] + '_';
   set_card(prefix, card, ai_hand[index]);
   setTimeout(function() { clear_card(prefix, card); }, 500);
-}
-
-function show_special_message(message, bottom, color) {
-  show_element('special');
-  set_inner_html('special', message);
-  document.getElementById('special').style.bottom = bottom;
-  document.getElementById('special').style.color = color;
 }
 
 function fold_hand() {
@@ -361,6 +305,17 @@ function ai_fold_hand() {
   show_special_message('Fold', '74%', 'silver');
   update_scores(fold_points, 0);
   on_hand_finished();
+}
+
+function optimize_hand() {
+  waves = (new HandOptimizer(hand)).waves;
+  for (var wave in waves) {
+    for (var card in waves[wave]) {
+      membership[waves[wave][card]] = wave;
+    }
+    redraw_wave(wave);
+  }
+  redraw_hand();
 }
 
 function show_hand() {
@@ -417,36 +372,6 @@ function show_hand() {
   on_hand_finished();
 }
 
-function update_scores(points, ai_points) {
-  var sound = document.getElementById(points >= ai_points ? 'win' : 'lose');
-  sound.volume = Math.min(1.0, Math.abs(points - ai_points) / 10 + 0.1);
-  sound.play();
-
-  total_points += points;
-  ai_total_points += ai_points;
-  set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
-  set_inner_html('score_diff', '&nbsp;&nbsp;+' + points + ' ' + '+' + ai_points);
-  show_element('score_diff', 'block');
-  animate_score_diff(-5);
-}
-
-function animate_score_diff(offset) {
-  document.getElementById('score_diff').style.top = offset + 'px';
-  if (offset > -25) {
-    setTimeout(function() { animate_score_diff(offset - 2); }, 100);
-  } else {
-    hide_element('score_diff');
-  }
-}
-
-function on_hand_finished() {
-  enable_element('level');
-  show_element('deal');
-  hide_element('show');
-  disable_element('fold');
-  disable_element('claim');
-}
-
 function claim() {
   var special = new SpecialPattern(hand);
   if (special.pattern == None) {
@@ -484,13 +409,91 @@ function ai_claim() {
   return true;
 }
 
-function optimize_hand() {
-  waves = (new HandOptimizer(hand)).waves;
-  for (var wave in waves) {
-    for (var card in waves[wave]) {
-      membership[waves[wave][card]] = wave;
-    }
-    redraw_wave(wave);
-  }
-  redraw_hand();
+function update_scores(points, ai_points) {
+  var sound = document.getElementById(points >= ai_points ? 'win' : 'lose');
+  sound.volume = Math.min(1.0, Math.abs(points - ai_points) / 10 + 0.1);
+  sound.play();
+
+  total_points += points;
+  ai_total_points += ai_points;
+  set_inner_html('score', 'You ' + total_points + '-' + ai_total_points + ' AI');
+  set_inner_html('score_diff', '&nbsp;&nbsp;+' + points + ' ' + '+' + ai_points);
+  show_element('score_diff', 'block');
+  animate_score_diff(-5);
 }
+
+function animate_score_diff(offset) {
+  document.getElementById('score_diff').style.top = offset + 'px';
+  if (offset > -25) {
+    setTimeout(function() { animate_score_diff(offset - 2); }, 100);
+  } else {
+    hide_element('score_diff');
+  }
+}
+
+function on_hand_finished() {
+  enable_element('level');
+  show_element('deal');
+  hide_element('show');
+  disable_element('fold');
+  disable_element('claim');
+}
+
+/////////////////////// Lower level functions ///////////////////////////////
+
+function set_card(prefix, index, card) {
+  set_inner_html(prefix + 'suit_' + index, suit_names[suit(card)]);
+  set_inner_html(prefix + 'rank_' + index, rank_names[rank(card)]);
+}
+
+function clear_card(prefix, index) {
+  set_inner_html(prefix + 'suit_' + index, '?');
+  set_inner_html(prefix + 'rank_' + index, '?');
+}
+
+function enable_card(prefix, index) {
+  var id = prefix + 'card_' + index;
+  set_background(id, 'white');
+}
+
+function disable_card(prefix, index) {
+  var id = prefix + 'card_' + index;
+  set_background(id, 'silver');
+}
+
+function show_special_message(message, bottom, color) {
+  show_element('special');
+  set_inner_html('special', message);
+  document.getElementById('special').style.bottom = bottom;
+  document.getElementById('special').style.color = color;
+}
+
+function show_alert(message) {
+  set_inner_html('alert_message', message);
+  show_element('alert');
+}
+
+function set_inner_html(id, value) {
+  document.getElementById(id).innerHTML = value;
+}
+
+function set_background(id, color) {
+  document.getElementById(id).style.backgroundColor = color;
+}
+
+function show_element(id, display = 'inline') {
+  document.getElementById(id).style.display = display;
+}
+
+function hide_element(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function enable_element(id) {
+  document.getElementById(id).disabled = false;
+}
+
+function disable_element(id) {
+  document.getElementById(id).disabled = true;
+}
+

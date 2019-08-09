@@ -1,7 +1,7 @@
+var None = 0, ThreeStraights = 1, ThreeFlushes = 2, SixPairs = 3, Dragon = 4;
 var special_names = [
   'None', 'Three Straights', 'Three Flushes', 'Six Pairs', 'Dragon'
 ];
-var None = 0, ThreeStraights = 1, ThreeFlushes = 2, SixPairs = 3, Dragon = 4;
 var special_points = [0, 6, 6, 6, 13];
 
 class SpecialPattern {
@@ -16,6 +16,21 @@ class SpecialPattern {
 
   get pattern() { return this.special; }
   get cards() { return this.hand; }
+
+  is_straight(cards) {
+    for (var i = 0; i < cards.length - 1; ++i)
+      if (rank(cards[i]) + 1 != rank(cards[i + 1])) return false;
+    return true;
+  }
+
+  dragon(hand) {
+    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    if (this.is_straight(hand)) {
+      this.hand = hand;
+      return true;
+    }
+    return false;
+  }
 
   six_pairs(hand) {
     hand.sort(function(a, b) { return rank(a) - rank(b); });
@@ -54,21 +69,6 @@ class SpecialPattern {
     if (this.is_flush(hand.slice(0,5)) && this.is_flush(hand.slice(5,10)) &&
         this.is_flush(hand.slice(10,13))) {
       this.hand = hand.slice(10,13).concat(hand.slice(0,5), hand.slice(5,10));
-      return true;
-    }
-    return false;
-  }
-
-  is_straight(cards) {
-    for (var i = 0; i < cards.length - 1; ++i)
-      if (rank(cards[i]) + 1 != rank(cards[i + 1])) return false;
-    return true;
-  }
-
-  dragon(hand) {
-    hand.sort(function(a, b) { return rank(a) - rank(b); });
-    if (this.is_straight(hand)) {
-      this.hand = hand;
       return true;
     }
     return false;
@@ -234,7 +234,7 @@ function test_special_patterns() {
 
     var hand = random_three_straights();
     var special = new SpecialPattern(hand);
-  if (special.pattern < ThreeStraights) {
+    if (special.pattern < ThreeStraights) {
       console.log('Mistake Three Straights as ' + special_names[special.pattern]);
       ++num_failures;
     }
