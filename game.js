@@ -153,25 +153,46 @@ function move_card(index) {
   }
 }
 
+// The browser fires touchstart--touchend--mousedown--mouseup for a short touch
+// and touchstart--touchend for a long touch.
 var long_press_ms = 300;
-var press_time = 0;
+var touch_start_time = 0, touch_end_time = 0;
+var mouse_down_time = 0, mouse_up_time = 0;
 
-function press_card(index) {
-  press_time = (new Date()).getTime();
+function on_touch_start(index) {
+  touch_start_time = (new Date()).getTime();
 }
 
-function release_card(index) {
-  if (press_time == 0) return;
-  if (undo_hand_card(index)) return;
+function on_touch_end(index) {
+  touch_end_time = (new Date()).getTime();
 
-  var release_time = (new Date()).getTime();
-  if (release_time - press_time < long_press_ms) {
+  if (undo_hand_card(index)) return;
+  if (touch_end_time - touch_start_time < long_press_ms) {
     move_card(index);
   } else {
     fill_wave(active_wave, index);
   }
-  // Reset press time in case ontouchend and onmousedown both fire.
-  press_time = 0;
+}
+
+function on_mouse_down(index) {
+  mouse_down_time = (new Date()).getTime();
+
+  // Ignore mousedown if it is too close to touchend,
+  if (mouse_down_time - touch_end_time < long_press_ms)
+    mouse_down_time = 0;
+}
+
+function on_mouse_up(index) {
+  // Ignore mouseup if mousedown is ignored.
+  if (mouse_down_time == 0) return;
+  mouse_up_time = (new Date()).getTime();
+
+  if (undo_hand_card(index)) return;
+  if (mouse_up_time - mouse_down_time < long_press_ms) {
+    move_card(index);
+  } else {
+    fill_wave(active_wave, index);
+  }
 }
 
 function undo_hand_card(index) {
