@@ -24,7 +24,7 @@ class SpecialPattern {
   }
 
   dragon(hand) {
-    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    hand.sort((a, b) => rank(a) - rank(b));
     if (this.is_straight(hand)) {
       this.hand = hand;
       return true;
@@ -33,7 +33,7 @@ class SpecialPattern {
   }
 
   six_pairs(hand) {
-    hand.sort(function(a, b) { return rank(a) - rank(b); });
+    hand.sort((a, b) => rank(a) - rank(b));
     var num_pairs = 0;
     for (var i = 0; i < 12; ++i) {
       if (rank(hand[i]) == rank(hand[i + 1])) {
@@ -55,7 +55,7 @@ class SpecialPattern {
   }
 
   three_flushes(hand) {
-    hand.sort(function(a, b) { return suit(a) - suit(b); });
+    hand.sort((a, b) => suit(a) - suit(b));
     if (this.is_flush(hand.slice(0,3)) && this.is_flush(hand.slice(3,8)) &&
         this.is_flush(hand.slice(8,13))) {
       this.hand = hand;
@@ -148,9 +148,7 @@ function random_suit() { return random(4); }
 
 function random_dragon() {
   var ranks = [...Array(13).keys()];
-  return ranks.map(function(rank) {
-    return rank + random_suit() * 13;
-  });
+  return ranks.map((rank) => rank + random_suit() * 13);
 }
 
 function random_six_pairs() {
@@ -171,19 +169,13 @@ function random_three_flushes() {
   var ranks = [...Array(13).keys()];
   shuffle(ranks);
   var suit = random_suit();
-  hand = hand.concat(ranks.slice(0, 3).map(function(rank) {
-    return rank + suit * 13;
-  }));
+  hand = hand.concat(ranks.slice(0, 3).map((rank) => rank + suit * 13));
   shuffle(ranks);
   suit = (suit + 1) % 4;
-  hand = hand.concat(ranks.slice(0, 5).map(function(rank) {
-    return rank + suit * 13;
-  }));
+  hand = hand.concat(ranks.slice(0, 5).map((rank) => rank + suit * 13));
   shuffle(ranks);
   suit = (suit + 1) % 4;
-  hand = hand.concat(ranks.slice(0, 5).map(function(rank) {
-    return rank + suit * 13;
-  }));
+  hand = hand.concat(ranks.slice(0, 5).map((rank) => rank + suit * 13));
   return hand;
 }
 

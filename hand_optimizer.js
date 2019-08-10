@@ -10,7 +10,7 @@ class HandOptimizer {
   }
 
   optimize_waves() {
-    this.hand.sort(function(a, b) { return rank(a) - rank(b); });
+    this.hand.sort((a, b) => rank(a) - rank(b));
     this.max_value = 0;
     this.optimize_back();
   }

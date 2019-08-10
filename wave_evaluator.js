@@ -106,7 +106,7 @@ class WaveEvaluator {
   }
 
   extract_features() {
-    this.cards.sort(function(a, b) { return rank(a) - rank(b); });
+    this.cards.sort((a, b) => rank(a) - rank(b));
 
     var num_junks = 0, num_pairs = 0, num_triples = 0;
     var length = this.cards.length;
@@ -160,9 +160,8 @@ class WaveEvaluator {
       }
     }
 
-    this.features.sort(function(a, b) {
-      return a.type == b.type ? b.rank - a.rank : b.type - a.type;
-    });
+    this.features.sort((a, b) => a.type == b.type ?
+                       b.rank - a.rank : b.type - a.type);
 
     if (num_pairs == 2) {
       this.features[0].type = TwoPairs;
