@@ -155,7 +155,7 @@ function move_card(index) {
 
 // The browser fires touchstart--touchend--mousedown--mouseup for a short touch
 // and touchstart--touchend for a long touch.
-var long_press_ms = 300;
+var long_press_ms = 250;
 var touch_start_time = 0, touch_end_time = 0;
 var mouse_down_time = 0, mouse_up_time = 0;
 
@@ -178,7 +178,7 @@ function on_mouse_down(index) {
   mouse_down_time = (new Date()).getTime();
 
   // Ignore mousedown if it is too close to touchend,
-  if (mouse_down_time - touch_end_time < long_press_ms)
+  if (mouse_down_time - touch_end_time < long_press_ms * 2)
     mouse_down_time = 0;
 }
 
