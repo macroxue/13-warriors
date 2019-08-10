@@ -161,8 +161,8 @@ function press_card(index) {
 }
 
 function release_card(index) {
-  if (undo_hand_card(index)) return;
   if (press_time == 0) return;
+  if (undo_hand_card(index)) return;
 
   var release_time = (new Date()).getTime();
   if (release_time - press_time < long_press_ms) {
