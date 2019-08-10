@@ -154,7 +154,7 @@ function move_card(index) {
 }
 
 var long_press_ms = 300;
-var press_time;
+var press_time = 0;
 
 function press_card(index) {
   press_time = (new Date()).getTime();
@@ -162,6 +162,7 @@ function press_card(index) {
 
 function release_card(index) {
   if (undo_hand_card(index)) return;
+  if (press_time == 0) return;
 
   var release_time = (new Date()).getTime();
   if (release_time - press_time < long_press_ms) {
@@ -169,6 +170,8 @@ function release_card(index) {
   } else {
     fill_wave(active_wave, index);
   }
+  // Reset press time in case ontouchend and onmousedown both fire.
+  press_time = 0;
 }
 
 function undo_hand_card(index) {
