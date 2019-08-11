@@ -57,7 +57,7 @@ function deal_hand() {
   ai_hand = deck.slice(0, 13);
   for (var wave in wave_names) {
     for (var i = 0; i < wave_sizes[wave]; ++i) {
-      clear_card('ai_' + wave_names[wave] + '_', i);
+      face_down('ai_' + wave_names[wave] + '_', i);
     }
   }
   ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
@@ -123,12 +123,10 @@ function sort_hand(toggle) {
 
 function redraw_hand() {
   for (var index in hand) {
-    set_card('', index, hand[index]);
-    if (membership[hand[index]] == null) {
-      enable_card('', index);
-    } else {
-      disable_card('', index);
-    }
+    face_up('', index, hand[index]);
+  }
+  for (index = hand.length; index < 13; ++index) {
+    clear_card('', index);
   }
 }
 
@@ -140,7 +138,9 @@ function activate_wave(wave) {
 
 function move_card(index) {
   var card = hand[index];
-  disable_card('', index);
+  hand.splice(index, 1);
+  redraw_hand();
+
   membership[card] = active_wave;
   waves[active_wave].push(card);
   waves[active_wave].sort((a, b) => rank(a) - rank(b));
@@ -169,7 +169,7 @@ function on_touch_start(index) {
 function on_touch_end(index) {
   touch_end_time = (new Date()).getTime();
 
-  if (undo_hand_card(index)) return;
+  if (index >= hand.length) return;
   if (touch_end_time - touch_start_time < long_press_ms) {
     move_card(index);
   } else {
@@ -190,21 +190,12 @@ function on_mouse_up(index) {
   if (mouse_down_time == 0) return;
   mouse_up_time = (new Date()).getTime();
 
-  if (undo_hand_card(index)) return;
+  if (index >= hand.length) return;
   if (mouse_up_time - mouse_down_time < long_press_ms) {
     move_card(index);
   } else {
     fill_wave(active_wave, index);
   }
-}
-
-function undo_hand_card(index) {
-  var card = hand[index];
-  if (membership[card] == null) return false;
-
-  var wave = membership[card];
-  undo_wave_card(wave, waves[wave].indexOf(card));
-  return true;
 }
 
 function undo_wave_card(wave, index) {
@@ -214,8 +205,9 @@ function undo_wave_card(wave, index) {
   }
 
   var card = waves[wave][index];
-  enable_card('', hand.indexOf(card));
   delete membership[card];
+  hand.push(card);
+  sort_hand(false);
 
   waves[wave].splice(index, 1);
   redraw_wave(wave);
@@ -223,11 +215,8 @@ function undo_wave_card(wave, index) {
 
 function fill_wave(wave, start_index = 0) {
   activate_wave(wave);
-  for (var index = start_index;
-       index < hand.length && waves[wave].length < wave_sizes[wave]; ++index) {
-    if (membership[hand[index]] == null) {
-      move_card(index);
-    }
+  while (start_index < hand.length && waves[wave].length < wave_sizes[wave]) {
+    move_card(start_index);
   }
 }
 
@@ -238,10 +227,9 @@ function undo_all_cards() {
 }
 
 function clear_wave(wave) {
-  for (var i = waves[wave].length - 1; i >= 0; --i) {
-    undo_wave_card(wave, i);
+  while (waves[wave].length > 0) {
+    undo_wave_card(wave, 0);
   }
-  redraw_wave(wave);
 }
 
 function redraw_wave(wave) {
@@ -262,7 +250,7 @@ function redraw_wave(wave) {
 
   for (var i = 0; i < wave_sizes[wave]; ++i) {
     if (i < waves[wave].length)
-      set_card(name + '_', i, waves[wave][i]);
+      face_up(name + '_', i, waves[wave][i]);
     else
       clear_card(name + '_', i);
   }
@@ -312,6 +300,7 @@ function load_waves(number) {
   for (var wave in waves) {
     redraw_wave(wave);
   }
+  hand = [];
   redraw_hand();
 }
 
@@ -321,8 +310,8 @@ function peek_ai_card(index) {
   var wave = Math.floor((index + 2) / 5);
   var card = wave == Front ? index : (index + 2) % 5;
   var prefix = 'ai_' + wave_names[wave] + '_';
-  set_card(prefix, card, ai_hand[index]);
-  setTimeout(() => clear_card(prefix, card), 500);
+  face_up(prefix, card, ai_hand[index]);
+  setTimeout(() => face_down(prefix, card), 500);
 }
 
 function fold_hand() {
@@ -338,6 +327,7 @@ function ai_fold_hand() {
 }
 
 function optimize_hand() {
+  hand = hand.concat(waves[Front], waves[Center], waves[Back]);
   waves = (new HandOptimizer(hand)).waves;
   for (var wave in waves) {
     for (var card of waves[wave]) {
@@ -345,6 +335,7 @@ function optimize_hand() {
     }
     redraw_wave(wave);
   }
+  hand = [];
   redraw_hand();
 }
 
@@ -374,7 +365,7 @@ function show_hand() {
   var wins = 0, ai_wins = 0;
   for (var wave in ai_waves) {
     for (var i in ai_waves[wave]) {
-      set_card('ai_' + wave_names[wave] + '_', i, ai_waves[wave][i]);
+      face_up('ai_' + wave_names[wave] + '_', i, ai_waves[wave][i]);
     }
     var result = '';
     if (ai_eval[wave].is_smaller_than(eval[wave])) {
@@ -430,7 +421,7 @@ function ai_claim() {
     var wave = Math.floor((index + 2) / 5);
     var card = wave == Front ? index : (index + 2) % 5;
     var prefix = 'ai_' + wave_names[wave] + '_';
-    set_card(prefix, card, ai_hand[index]);
+    face_up(prefix, card, ai_hand[index]);
   }
 
   show_special_message(special_names[special.pattern], '74%', 'gold');
@@ -471,24 +462,23 @@ function on_hand_finished() {
 
 /////////////////////// Lower level functions ///////////////////////////////
 
-function set_card(prefix, index, card) {
+function face_up(prefix, index, card) {
   set_inner_html(prefix + 'suit_' + index, suit_names[suit(card)]);
   set_inner_html(prefix + 'rank_' + index, rank_names[rank(card)]);
+  set_background(prefix + 'card_' + index, 'white');
+}
+
+function face_down(prefix, index) {
+  var mesh = 'linear-gradient(45deg, #dca 12%, transparent 0, transparent 88%, #dca 0), linear-gradient(135deg, transparent 37%, #a85 0, #a85 63%, transparent 0), linear-gradient(45deg, transparent 37%, #dca 0, #dca 63%, transparent 0) #753';
+  set_inner_html(prefix + 'suit_' + index, '&nbsp;');
+  set_inner_html(prefix + 'rank_' + index, '&nbsp;');
+  set_background(prefix + 'card_' + index, 'white', mesh, '10px 10px');
 }
 
 function clear_card(prefix, index) {
-  set_inner_html(prefix + 'suit_' + index, '?');
-  set_inner_html(prefix + 'rank_' + index, '?');
-}
-
-function enable_card(prefix, index) {
-  var id = prefix + 'card_' + index;
-  set_background(id, 'white');
-}
-
-function disable_card(prefix, index) {
-  var id = prefix + 'card_' + index;
-  set_background(id, 'silver');
+  set_inner_html(prefix + 'suit_' + index, '&nbsp;');
+  set_inner_html(prefix + 'rank_' + index, '&nbsp;');
+  set_background(prefix + 'card_' + index, 'green');
 }
 
 function show_special_message(message, bottom, color) {
@@ -507,8 +497,11 @@ function set_inner_html(id, value) {
   document.getElementById(id).innerHTML = value;
 }
 
-function set_background(id, color) {
-  document.getElementById(id).style.backgroundColor = color;
+function set_background(id, color, pattern = '', size = 0) {
+  var element = document.getElementById(id);
+  element.style.background = pattern;
+  element.style.backgroundColor = color;
+  element.style.backgroundSize = size;
 }
 
 function show_element(id, display = 'inline') {
