@@ -80,7 +80,7 @@ table.hand {
   padding: 2px;
 }
 table.card {
-  background-color: white;
+  background-color: green;
   border-radius: 5px;
   padding: 0px;
   text-align: center;
