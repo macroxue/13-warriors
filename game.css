@@ -53,7 +53,7 @@ button.load {
   padding: 5px 0px;
   width: 40px;
 }
-button#show, button#fold, button#claim {
+button#deal, button#fold, button#claim {
   display: none
 }
 select.menu {

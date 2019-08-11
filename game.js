@@ -60,10 +60,6 @@ function deal_hand() {
       face_down('ai_' + wave_names[wave] + '_', i);
     }
   }
-  ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
-  ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
-             new WaveEvaluator(ai_waves[Center], Center),
-             new WaveEvaluator(ai_waves[Back], Back)];
 
   hand = deck.slice(13, 26);
   sort_hand(false);
@@ -72,7 +68,8 @@ function deal_hand() {
     waves[wave] = [];
     redraw_wave(wave);
   }
-  redraw_hand();
+  sort_hand(false);
+  membership = {};
   saved_waves = [];
 
   set_inner_html('load', '&nbsp;Load: ');
@@ -93,10 +90,16 @@ function deal_hand() {
     hide_element('auto');
     show_element('fold');
     enable_element('fold');
-
-    if (ai_expected_net_points() < -fold_points)
-      ai_fold_hand();
   }
+
+  setTimeout(function() {
+    ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
+    ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
+               new WaveEvaluator(ai_waves[Center], Center),
+               new WaveEvaluator(ai_waves[Back], Back)];
+    if (!level_def[level].auto && ai_expected_net_points() < -fold_points)
+      ai_fold_hand();
+  }, 0);
 }
 
 function ai_expected_net_points() {
