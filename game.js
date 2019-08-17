@@ -15,9 +15,9 @@ var wave_names = [ 'front', 'center', 'back' ];
 var wave_sizes = [ 3, 5, 5 ];
 
 var level_def = [
-  {ai_handicap: 3, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Jack
-  {ai_handicap: 2, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Queen
-  {ai_handicap: 1, ai_claim: 1, auto: 1, claim_aid: 1, peek: 1}, // King
+  {ai_handicap: 6, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Jack
+  {ai_handicap: 4, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Queen
+  {ai_handicap: 2, ai_claim: 1, auto: 1, claim_aid: 1, peek: 1}, // King
   {ai_handicap: 0, ai_claim: 1, auto: 0, claim_aid: 0, peek: 0}  // Ace
 ];
 var level = King - Jack;
