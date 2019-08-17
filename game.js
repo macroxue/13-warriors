@@ -397,7 +397,8 @@ function show_hand() {
 }
 
 function claim() {
-  var special = new SpecialPattern(hand);
+  var special = new SpecialPattern(hand.concat(waves[Front], waves[Center],
+                                               waves[Back]));
   if (special.pattern == None) {
     show_alert('No six pairs, three straights, three flushes or dragon.');
     return;
