@@ -33,6 +33,40 @@ var membership = {};  // which wave a card belongs to
 var active_wave = Front;
 var saved_waves = [];
 
+var key_map = {
+  'A': function() { click_element('auto'); },
+  'C': function() { click_element('clear'); },
+  'D': function() { click_element('deal'); },
+  'F': function() { click_element('fold'); },
+  'H': function() { click_element('show'); },
+  'M': function() { click_element('claim'); },
+  'S': function() { click_element('sort'); },
+  'V': function() { click_element('save'); },
+
+  '1': function() { click_element('load_1'); },
+  '2': function() { click_element('load_2'); },
+  '3': function() { click_element('load_3'); },
+  '4': function() { click_element('load_4'); },
+
+  'O': function() { click_element('ok'); },
+  'Y': function() { click_element('yes'); },
+  'N': function() { click_element('no'); },
+  '': function() { hide_element('alert'); hide_element('confirm'); }
+};
+
+function initialize() {
+  document.addEventListener('keyup', function(e) {
+    for (var key in key_map) {
+      if (key.charCodeAt(0) == e.keyCode) {
+        key_map[key].apply();
+        e.preventDefault();
+        return;
+      }
+    }
+  });
+  deal_hand();
+}
+
 function suit(card) { return Math.floor(card / 13); }
 function rank(card) { return card % 13; }
 
@@ -282,7 +316,7 @@ function save_waves() {
 
   var button = document.createElement('BUTTON');
   var id = Math.floor(number + 1);
-  button.innerHTML = id;
+  button.innerHTML = '<u>' + id + '</u>';
   button.className = 'load';
   button.id = 'load_' + id;
   button.onclick = function() { load_waves(number) };
@@ -530,4 +564,17 @@ function enable_element(id) {
 
 function disable_element(id) {
   document.getElementById(id).disabled = true;
+}
+
+function is_element_active(id) {
+  var element = document.getElementById(id);
+  return element && !element.disabled && element.style.display != 'none';
+}
+
+function click_element(id) {
+  if (!is_element_active(id)) return;
+
+  var element = document.getElementById(id);
+  if (typeof element.onclick == 'function') element.onclick.apply();
+  if (typeof element.onclick == 'string') eval(element.onclick);
 }
