@@ -15,10 +15,10 @@ var wave_names = [ 'front', 'center', 'back' ];
 var wave_sizes = [ 3, 5, 5 ];
 
 var level_def = [
-  {ai_handicap: 6, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Jack
-  {ai_handicap: 4, ai_claim: 0, auto: 1, claim_aid: 1, peek: 1}, // Queen
-  {ai_handicap: 2, ai_claim: 1, auto: 1, claim_aid: 1, peek: 1}, // King
-  {ai_handicap: 0, ai_claim: 1, auto: 0, claim_aid: 0, peek: 0}  // Ace
+  {ai_handicap: 6, ai_claim: 0, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // Jack
+  {ai_handicap: 4, ai_claim: 0, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // Queen
+  {ai_handicap: 2, ai_claim: 1, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // King
+  {ai_handicap: 0, ai_claim: 1, auto: 0, claim_aid: 0, fold: 1, peek: 0}  // Ace
 ];
 var level = King - Jack;
 
@@ -85,11 +85,14 @@ function deal_hand() {
     hide_element('claim');
   if (level_def[level].auto) {
     show_element('auto');
-    hide_element('fold');
   } else {
     hide_element('auto');
+  }
+  if (level_def[level].fold) {
     show_element('fold');
     enable_element('fold');
+  } else {
+    hide_element('fold');
   }
 
   setTimeout(function() {
@@ -98,7 +101,7 @@ function deal_hand() {
     ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
                new WaveEvaluator(ai_waves[Center], Center),
                new WaveEvaluator(ai_waves[Back], Back)];
-    if (!level_def[level].auto && ai.points < -fold_points)
+    if (level_def[level].fold && ai.points < -fold_points)
       ai_fold_hand();
   }, 0);
 }
@@ -106,10 +109,9 @@ function deal_hand() {
 function sort_hand(toggle) {
   if (toggle) sorted_by_rank = !sorted_by_rank;
   if (sorted_by_rank) {
-    hand.sort((a, b) => rank(a) - rank(b));
+    hand.sort((a, b) => rank(a) == rank(b) ? suit(a) - suit(b) : rank(a) - rank(b));
   } else {
-    hand.sort((a, b) => suit(a) == suit(b) ?
-              rank(a) - rank(b) : suit(a) - suit(b));
+    hand.sort((a, b) => suit(a) == suit(b) ? rank(a) - rank(b) : suit(a) - suit(b));
   }
   redraw_hand();
 }
@@ -130,6 +132,8 @@ function activate_wave(wave) {
 }
 
 function move_card(index) {
+  if (index >= hand.length) return;
+
   var card = hand[index];
   hand.splice(index, 1);
   redraw_hand();
@@ -277,8 +281,10 @@ function save_waves() {
   }
 
   var button = document.createElement('BUTTON');
-  button.innerHTML = Math.floor(number + 1);
+  var id = Math.floor(number + 1);
+  button.innerHTML = id;
   button.className = 'load';
+  button.id = 'load_' + id;
   button.onclick = function() { load_waves(number) };
   document.getElementById('load').appendChild(button);
   show_element('load');
@@ -308,9 +314,12 @@ function peek_ai_card(index) {
 }
 
 function fold_hand() {
-  show_special_message('Fold', '0%', 'silver');
-  update_scores(0, fold_points);
-  on_hand_finished();
+  show_confirm('Really want to fold your hand?',
+               function() {
+                 show_special_message('Fold', '0%', 'silver');
+                 update_scores(0, fold_points);
+                 on_hand_finished();
+               });
 }
 
 function ai_fold_hand() {
@@ -487,6 +496,15 @@ function show_alert(message) {
   show_element('alert');
 }
 
+function show_confirm(message, action) {
+  set_inner_html('confirm_message', message);
+  document.getElementById('yes').onclick = function() {
+    hide_element('confirm');
+    action.apply();
+  };
+  show_element('confirm');
+}
+
 function set_inner_html(id, value) {
   document.getElementById(id).innerHTML = value;
 }
@@ -513,4 +531,3 @@ function enable_element(id) {
 function disable_element(id) {
   document.getElementById(id).disabled = true;
 }
-

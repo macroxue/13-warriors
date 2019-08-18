@@ -270,14 +270,14 @@
             <tr>
               <td>
                 <button class='menu' id='auto' onclick='optimize_hand()'>Auto</button>
-                <button class='menu' id='fold' onclick='show_element("fold_alert")'>Fold</button>
+                <button class='menu' id='fold' onclick='fold_hand()'>Fold</button>
               </td>
             </tr>
             <tr>
             </tr>
             <tr>
               <td>
-                <button class='menu' onclick='undo_all_cards()'>Clear</button>
+                <button class='menu' id='clear' onclick='undo_all_cards()'>Clear</button>
               </td>
             </tr>
           </table>
@@ -417,14 +417,14 @@
             <p>&nbsp;</p>
             <p>&nbsp;</p>
             <p id='alert_message'></p>
-            <button class='menu' onclick='hide_element("alert")'>OK</button>
+            <button class='menu' id='ok' onclick='hide_element("alert")'>Ok</button>
           </div>
-          <div class='alert' id='fold_alert' onclick='hide_element("fold_alert")'>
+          <div class='alert' id='confirm' onclick='hide_element("confirm")'>
             <p>&nbsp;</p>
             <p>&nbsp;</p>
-            <p>Really want to fold your hand?</p>
-            <button class='menu' onclick='fold_hand()'>Yes</button>&nbsp;&nbsp;
-            <button class='menu' onclick='hide_element("fold_alert")'>No</button>
+            <p id='confirm_message'></p>
+            <button class='menu' id='yes'>Yes</button>&nbsp;&nbsp;
+            <button class='menu' id='no' onclick='hide_element("confirm")'>No</button>
           </div>
         </td>
       </tr>
