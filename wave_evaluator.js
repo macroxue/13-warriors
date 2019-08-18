@@ -211,6 +211,7 @@ class WaveEvaluator {
   get pattern() { return this.features[0].type; }
   get rank() { return this.features[0].rank; }
   get value() { return this.win_percent; }
+  get points() { return pattern_points[this.order][this.pattern]; }
   get wave() {
     // Special case for 2345A.
     if ((this.pattern == Straight || this.pattern == StraightFlush) &&

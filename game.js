@@ -93,24 +93,14 @@ function deal_hand() {
   }
 
   setTimeout(function() {
-    ai_waves = (new HandOptimizer(ai_hand, level_def[level].ai_handicap)).waves;
+    var ai = (new HandOptimizer(ai_hand, level_def[level].ai_handicap));
+    ai_waves = ai.waves;
     ai_eval = [new WaveEvaluator(ai_waves[Front], Front),
                new WaveEvaluator(ai_waves[Center], Center),
                new WaveEvaluator(ai_waves[Back], Back)];
-    if (!level_def[level].auto && ai_expected_net_points() < -fold_points)
+    if (!level_def[level].auto && ai.points < -fold_points)
       ai_fold_hand();
   }, 0);
-}
-
-function ai_expected_net_points() {
-  var f = ai_eval[Front].value / 100.0;
-  var c = ai_eval[Center].value / 100.0;
-  var b = ai_eval[Back].value / 100.0;
-  var win3 = f*c*b;
-  var win2 = f*c*(1-b) + f*(1-c)*b + (1-f)*c*b;
-  var win1 = f*(1-c)*(1-b) + (1-f)*c*(1-b) + (1-f)*(1-c)*b;
-  var win0 = (1-f)*(1-c)*(1-b);
-  return win3*6 + win2*1 + win1*-1 + win0*-6;
 }
 
 function sort_hand(toggle) {

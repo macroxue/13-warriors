@@ -76,7 +76,7 @@ class HandOptimizer {
             [this.hand[f1], this.hand[f2], this.hand[f3]], Front);
           if (this.center.is_smaller_than(this.front)) break out;
 
-          var sum_value = this.front.value + this.center.value + this.back.value;
+          var sum_value = expected_points(this.front, this.center, this.back);
           var duplicate = false;
           for (var pos = 0; pos < this.top_waves.length; ++pos) {
             if (sum_value < this.top_waves[pos][0]) break;
@@ -102,4 +102,24 @@ class HandOptimizer {
     var waves = this.top_waves[0].slice(1);
     return [waves.slice(0, 3), waves.slice(3, 8), waves.slice(8, 13)];
   }
+
+  get points() {
+    return this.top_waves[0][0] / 100;
+  }
 };
+
+function expected_points(front_eval, center_eval, back_eval) {
+  var f = front_eval.value / 100.0;
+  var c = center_eval.value / 100.0;
+  var b = back_eval.value / 100.0;
+  var fp = front_eval.points;
+  var cp = center_eval.points;
+  var bp = back_eval.points;
+  var win3 = f*c*b*2*(fp+cp+bp);
+  var win2 = f*c*(1-b)*(fp+cp-bp) + f*(1-c)*b*(fp-cp+bp) + (1-f)*c*b*(-fp+cp+bp);
+  var win1 = f*(1-c)*(1-b)*(fp-cp-bp) + (1-f)*c*(1-b)*(-fp+cp-bp) +
+             (1-f)*(1-c)*b*(-fp-cp+bp);
+  var win0 = (1-f)*(1-c)*(1-b)*2*(-fp-cp-bp);
+  return Math.floor(100 * (win3 + win2 + win1 + win0));
+}
+
