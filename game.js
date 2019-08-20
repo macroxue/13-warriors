@@ -316,7 +316,7 @@ function save_waves() {
 
   var button = document.createElement('BUTTON');
   var id = Math.floor(number + 1);
-  button.innerHTML = '<u>' + id + '</u>';
+  button.innerHTML = '<span class="hotkey">' + id + '</span>';
   button.className = 'load';
   button.id = 'load_' + id;
   button.onclick = function() { load_waves(number) };
