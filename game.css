@@ -120,5 +120,5 @@ div.special {
   width: 90%;
 }
 span.hotkey {
-  color: black;
+  text-decoration: underline;
 }
