@@ -141,12 +141,12 @@
           <audio id='lose'><source src='lose.mp3'/></audio>
         </td>
         <td>
-          <button class='menu' id='save' onclick='save_waves()'>Sa<u>v</u>e</button>
+          <button class='menu' id='save' onclick='save_waves()'>Sa<span class='hotkey'>v</span>e</button>
           <b class='menu' id='load'></b>
         </td>
         <td>
-          <button class='menu' id='deal' onclick='deal_hand()'><u>D</u>eal</button>
-          <button class='menu' id='show' onclick='show_hand()'>S<u>h</u>ow</button>
+          <button class='menu' id='deal' onclick='deal_hand()'><span class='hotkey'>D</span>eal</button>
+          <button class='menu' id='show' onclick='show_hand()'>S<span class='hotkey'>h</span>ow</button>
         </td>
       </tr>
       <tr class='pattern'>
@@ -269,15 +269,15 @@
           <table>
             <tr>
               <td>
-                <button class='menu' id='auto' onclick='optimize_hand()'><u>A</u>uto</button>
-                <button class='menu' id='fold' onclick='fold_hand()'><u>F</u>old</button>
+                <button class='menu' id='auto' onclick='optimize_hand()'><span class='hotkey'>A</span>uto</button>
+                <button class='menu' id='fold' onclick='fold_hand()'><span class='hotkey'>F</span>old</button>
               </td>
             </tr>
             <tr>
             </tr>
             <tr>
               <td>
-                <button class='menu' id='clear' onclick='undo_all_cards()'><u>C</u>lear</button>
+                <button class='menu' id='clear' onclick='undo_all_cards()'><span class='hotkey'>C</span>lear</button>
               </td>
             </tr>
           </table>
@@ -403,13 +403,13 @@
           <table>
             <tr>
               <td>
-                <button class='menu' id='sort' onclick='sort_hand(true)'><u>S</u>ort</button>
+                <button class='menu' id='sort' onclick='sort_hand(true)'><span class='hotkey'>S</span>ort</button>
               </td>
             </tr>
             <tr></tr>
             <tr>
               <td>
-                <button class='menu' id='claim' onclick='claim()'>Clai<u>m</u></button>
+                <button class='menu' id='claim' onclick='claim()'>Clai<span class='hotkey'>m</span></button>
               </td>
             </tr>
           </table>
@@ -417,14 +417,14 @@
             <p>&nbsp;</p>
             <p>&nbsp;</p>
             <p id='alert_message'></p>
-            <button class='menu' id='ok' onclick='hide_element("alert")'><u>O</u>k</button>
+            <button class='menu' id='ok' onclick='hide_element("alert")'><span class='hotkey'>O</span>k</button>
           </div>
           <div class='alert' id='confirm' onclick='hide_element("confirm")'>
             <p>&nbsp;</p>
             <p>&nbsp;</p>
             <p id='confirm_message'></p>
-            <button class='menu' id='yes'><u>Y</u>es</button>&nbsp;&nbsp;
-            <button class='menu' id='no' onclick='hide_element("confirm")'><u>N</u>o</button>
+            <button class='menu' id='yes'><span class='hotkey'>Y</span>es</button>&nbsp;&nbsp;
+            <button class='menu' id='no' onclick='hide_element("confirm")'><span class='hotkey'>N</span>o</button>
           </div>
         </td>
       </tr>

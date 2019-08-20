@@ -119,3 +119,6 @@ div.special {
   text-shadow: 3px 3px 2px grey;
   width: 90%;
 }
+span.hotkey {
+  color: black;
+}
