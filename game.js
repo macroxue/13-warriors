@@ -339,6 +339,7 @@ function load_waves(number) {
 
 function peek_ai_card(index) {
   if (!level_def[level].peek) return;
+  if (is_element_active('deal')) return;
 
   var wave = Math.floor((index + 2) / 5);
   var card = wave == Front ? index : (index + 2) % 5;
