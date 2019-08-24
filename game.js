@@ -38,10 +38,10 @@ var key_map = {
   'C': function() { click_element('clear'); },
   'D': function() { click_element('deal'); },
   'F': function() { click_element('fold'); },
-  'H': function() { click_element('show'); },
   'M': function() { click_element('claim'); },
   'S': function() { click_element('sort'); },
   'V': function() { click_element('save'); },
+  'W': function() { click_element('show'); },
 
   '1': function() { click_element('load_1'); },
   '2': function() { click_element('load_2'); },
