@@ -17,7 +17,7 @@ var wave_sizes = [ 3, 5, 5 ];
 var level_def = [
   {ai_handicap: 6, ai_claim: 0, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // Jack
   {ai_handicap: 4, ai_claim: 0, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // Queen
-  {ai_handicap: 2, ai_claim: 1, auto: 1, claim_aid: 1, fold: 0, peek: 1}, // King
+  {ai_handicap: 2, ai_claim: 1, auto: 1, claim_aid: 1, fold: 1, peek: 1}, // King
   {ai_handicap: 0, ai_claim: 1, auto: 0, claim_aid: 0, fold: 1, peek: 0}  // Ace
 ];
 var level = King - Jack;
@@ -115,12 +115,10 @@ function deal_hand() {
   hide_element('special');
   show_element('claim');
   enable_element('claim');
-  if (level_def[level].claim_aid && (new SpecialPattern(hand)).pattern == None)
+  hide_element('auto');
+  if (level_def[level].claim_aid && (new SpecialPattern(hand)).pattern == None) {
     hide_element('claim');
-  if (level_def[level].auto) {
-    show_element('auto');
-  } else {
-    hide_element('auto');
+    if (level_def[level].auto) show_element('auto');
   }
   if (level_def[level].fold) {
     show_element('fold');
