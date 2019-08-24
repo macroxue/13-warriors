@@ -177,6 +177,10 @@ function move_card(index) {
 
   if (waves[active_wave].length == wave_sizes[active_wave]) {
     for (var wave in waves) {
+      if (hand.length > 0 && waves[wave].length + hand.length == wave_sizes[wave]) {
+        fill_wave(wave);
+        break;
+      }
       if (waves[wave].length < wave_sizes[wave]) {
         activate_wave(wave);
         break;
